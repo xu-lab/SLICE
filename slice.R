@@ -437,13 +437,13 @@ setMethod("setLineageModel","slice",
 #' @export
 setGeneric("getTrajectories", function(object, method="sp", start, end, 
                                       network="mst", NN.threshold=0.7,  # sp parameters
-                                      do.trim=F,                                      # pc parameters
+                                      do.trim=F, do.stepwise=T,                                     # pc parameters
                                       ...) standardGeneric("getTrajectories"))
 #' @export
 setMethod("getTrajectories","slice", 
           function(object, method="sp", start, end, 
                            network="mst", NN.threshold=0.7, # sp parameters
-                           do.trim=F,                                      # pc parameters
+                           do.trim=F, do.stepwise=T,                                         # pc parameters
                            ...) {
   
               methods <- c("sp","pc")
@@ -465,8 +465,13 @@ setMethod("getTrajectories","slice",
                 trajectories <- get.SP.Transitions(object@data, model, start, end, network=network, NN.threshold=NN.threshold, NN.type=NN.type, 
                                    do.plot=T, context_str=object@projname)
               } else if (method=="pc") {
-                trajectories <- get.PC.Transitions(object@data, model, start, end, do.trim=do.trim, 
+                if (do.stepwise==T) {
+                  trajectories <- get.PC.Transitions.stepwise(object@data, model, start, end, do.trim=do.trim, 
                                    do.plot=T, context_str=object@projname)
+                } else {
+                  trajectories <- get.PC.Transitions(object@data, model, start, end, do.trim=do.trim, 
+                                                     do.plot=T, context_str=object@projname)
+                }
               }
               object <- setTrajectories(object, method, trajectories=trajectories)
               return(object)
@@ -2164,6 +2169,210 @@ get.PC.Transitions <- function(es, model, start, end, do.trim=F, do.plot=T, cont
   return(transition.paths)
 }
 
+get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plot=T, context_str="") {
+  
+  if (is.null(model$lineageModel) | length(V(model$lineageModel))<2 ) {
+    stop("Not enough states")
+  }
+  
+  validStates <- 1:length(V(model$lineageModel))
+  if (!(start %in% validStates)) {
+    stop("Invalid start")
+  }
+  if (!(end %in% validStates)) {
+    stop("Invalid end state")
+  }
+  
+  g <- model$lineageModel
+  paths <- igraph::all_simple_paths(g, from=V(g)[start], to=V(g)[end], mode="out")
+  
+  transition.paths <- list()
+  cells.df <- model$cells.df
+  dim.cols.idx <- which(substr(colnames(cells.df), 1, 3)=="Dim")
+  if (length(dim.cols.idx)<2) {
+    stop("At least two columns with prefix \"Dim\" in pData(es) are required.")
+  }
+  dim.cols <- colnames(cells.df)[dim.cols.idx]
+  
+  cat("\nReconstructing principal-curve based cell trajectories following the inferred lineage C", start, "->C", end, "\n", sep="")
+  
+  if (length(paths)<=0) {
+    warning(paste("no transition path from ", V(g)$name[start], " to ", V(g)$name[end], sep=""))
+  } else {
+    for (i in 1:length(paths)) {
+      
+      i.n <- length(paths[[i]])
+      
+      if (i.n==1) {
+        i.start <- as.character(V(g)$name[start])
+        i.end <- as.character(V(g)$name[end])
+        i.path <- paths[[i]]$name
+        i.path.states <- cells.df$slice.state[which(rownames(cells.df) %in% i.path)]
+        i.cells.df <- cells.df[which(cells.df$slice.state %in% i.path.states), ]
+        i.cells.w <- (1-as.numeric(i.cells.df$entropy))
+        i.pcurve.fit <- principal.curve(as.matrix(i.cells.df[, dim.cols]), smoother="smooth.spline", w=i.cells.w, df=length(i.path)+1)
+        
+        i.pseudotime <- as.data.frame(i.pcurve.fit$s[i.pcurve.fit$tag, ]) # correct direction
+        s.id <- which(rownames(i.pseudotime)==i.start)
+        e.id <- which(rownames(i.pseudotime)==i.end)
+        if (s.id > e.id) { 
+          if (do.trim==T) {
+            i.pseudotime <- i.pseudotime[e.id:s.id, ]
+          }
+          i.pseudotime <- i.pseudotime[dim(i.pseudotime)[1]:1, ]
+        } else {
+          if (do.trim==T) {
+            i.pseudotime <- i.pseudotime[s.id:e.id, ]
+          }
+        }
+        i.pseudotime <- i.pseudotime[which(!(rownames(i.pseudotime)) %in% i.path),] # remove pseudotime cells
+        i.pseudotime$ptime <- seq(0, 1, length.out = dim(i.pseudotime)[1]) # add uniform pseudotime
+        
+        transition.paths[[i]] <- list(start=i.start, end=i.end, path=i.path,
+                                      i.path.states=i.path.states,
+                                      i.cells.df=i.cells.df, i.cells.w=i.cells.w,
+                                      i.pcurve.fit=i.pcurve.fit, 
+                                      i.pseudotime=i.pseudotime)
+        names(transition.paths)[i] <- paste(i.start, "_to_", i.end, "_path", i, sep="")
+      } else {
+
+        
+        i.transitions <- list()
+        i.path <- paths[[i]]$name
+        i.start <- as.character(V(g)$name[start])
+        i.end <- as.character(V(g)$name[end])
+        i.path <- paths[[i]]$name
+        i.path.states <- cells.df$slice.state[which(rownames(cells.df) %in% i.path)]
+        # get stepwise transitions
+        j <- 1
+        k <- j+1
+        i.jk.start <- i.path[j]
+        i.jk.end <- i.path[k]
+        i.j.state <- as.character(cells.df[i.jk.start, "slice.state"])
+        i.k.state <- as.character(cells.df[i.jk.end, "slice.state"])
+        
+        i.jk.cells.df <- cells.df[which(cells.df$slice.state %in% c(i.j.state, i.k.state)), ]
+        i.jk.cells.w <- (1-as.numeric(i.jk.cells.df$entropy))
+        i.jk.pcurve.fit <- principal.curve(as.matrix(i.jk.cells.df[, dim.cols]), smoother="smooth.spline", w=i.jk.cells.w, df=3)
+        i.jk.pseudotime <- as.data.frame(i.jk.pcurve.fit$s[i.jk.pcurve.fit$tag, ])
+        
+        i.jk.s.id <- which(rownames(i.jk.pseudotime)==i.jk.start)
+        i.jk.e.id <- which(rownames(i.jk.pseudotime)==i.jk.end)
+        if (i.jk.s.id > i.jk.e.id) { 
+          i.jk.pseudotime <- i.jk.pseudotime[dim(i.jk.pseudotime)[1]:1, ]
+        }
+        i.pseudotime <- i.jk.pseudotime
+        i.transitions[[j]] <- list(start=i.jk.start, end=i.jk.end, path=i.path[j:k],
+                                      i.path.states=c(i.j.state, i.k.state),
+                                      i.cells.df=i.jk.cells.df, i.cells.w=i.jk.cells.w,
+                                      i.pcurve.fit=i.jk.pcurve.fit, 
+                                      i.pseudotime=i.jk.pseudotime)
+        
+        j <- j+1
+        k <- k+1
+        while (k<=i.n) {
+          i.jk.start <- i.path[j]
+          i.jk.end <- i.path[k]
+          i.j.state <- as.character(cells.df[i.jk.start, "slice.state"])
+          i.k.state <- as.character(cells.df[i.jk.end, "slice.state"])
+          
+          i.jk.cells.df <- cells.df[which(cells.df$slice.state %in% c(i.j.state, i.k.state)), ]
+          i.jk.cells.w <- (1-as.numeric(i.jk.cells.df$entropy))
+          i.jk.pcurve.fit <- principal.curve(as.matrix(i.jk.cells.df[, dim.cols]), smoother="smooth.spline", w=i.jk.cells.w, df=3)
+          i.jk.pseudotime <- as.data.frame(i.jk.pcurve.fit$s[i.jk.pcurve.fit$tag, ])
+          
+          i.jk.s.id <- which(rownames(i.jk.pseudotime)==i.jk.start)
+          i.jk.e.id <- which(rownames(i.jk.pseudotime)==i.jk.end)
+          if (i.jk.s.id > i.jk.e.id) { 
+            i.jk.pseudotime <- i.jk.pseudotime[dim(i.jk.pseudotime)[1]:1, ]
+          }
+          i.transitions[[j]] <- list(start=i.jk.start, end=i.jk.end, path=i.path[j:k],
+                                     i.path.states=c(i.j.state, i.k.state),
+                                     i.cells.df=i.jk.cells.df, i.cells.w=i.jk.cells.w,
+                                     i.pcurve.fit=i.jk.pcurve.fit, 
+                                     i.pseudotime=i.jk.pseudotime)
+          
+          id1 <- which(rownames(i.pseudotime) == i.jk.start)
+          id2 <- which(rownames(i.jk.pseudotime) == i.jk.start)
+          
+          temp <- data.frame(cell=rownames(i.pseudotime), i.pseudotime)
+          rownames(temp)=NULL
+          temp <- rbind(temp, data.frame(cell=rownames(i.jk.pseudotime), i.jk.pseudotime))
+          rownames(temp)=NULL
+          
+          n1 <- dim(i.pseudotime)[1]
+          n2 <- dim(i.jk.pseudotime)[1]
+          temp$select <- 1
+          
+          for (r in 1:(n1+id2-1)) {
+            if (as.character(temp$cell[r]) %in% as.character(temp$cell[(n1+id2):(n1+n2)])) temp$select[r] <- 0
+          }
+          
+          for (r in (id1+1):(n1+id2-1)) {
+            if (as.character(temp$cell[r]) %in% as.character(temp$cell[1:id1])) temp$select[r] <- 0
+          }
+          
+          for (r in (n1+1):(n1+id2-1)) {
+            if (as.character(temp$cell[r]) %in% as.character(temp$cell[id1:n1])) temp$select[r] <- 0
+          }
+          
+          i.pseudotime <- temp[which(temp$select==1), ]
+          rownames(i.pseudotime) <- i.pseudotime$cell
+          i.pseudotime <- i.pseudotime[, dim.cols]
+
+          j <- j+1
+          k <- k+1
+        }
+        
+        if (do.trim==T) {
+          s.id <- which(rownames(i.pseudotime)==i.start)
+          e.id <- which(rownames(i.pseudotime)==i.end) 
+          i.pseudotime <- i.pseudotime[s.id:e.id,]
+        }
+        
+        i.pseudotime <- i.pseudotime[which(!(rownames(i.pseudotime)) %in% i.path),] # remove pseudotime cells
+        i.pseudotime$ptime <- seq(0, 1, length.out = dim(i.pseudotime)[1]) # add uniform pseudotime
+        
+        transition.paths[[i]] <- list(start=i.start, end=i.end, path=i.path,
+                                      i.path.states=i.path.states,
+                                     # i.cells.df=i.cells.df, i.cells.w=i.cells.w,
+                                    #  i.pcurve.fit=i.pcurve.fit, 
+                                      i.pseudotime=i.pseudotime)
+        names(transition.paths)[i] <- paste(i.start, "_to_", i.end, "_path", i, sep="")
+        
+        
+      }
+    }
+    
+    if (do.plot) {
+      pdf.w <- 8
+      pdf.h <- 6
+      
+      for (i in 1:length(transition.paths)) {
+        g <- ggplot() + ggtitle("Cell transitional path") + labs(x="PC1", y="PC2")
+        g <- g + ggtitle(names(transition.paths)[i])
+        g <- g + geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate != "NA" ), aes(x=x, y=y, col=slice.state, size=entropy)) 
+        g <- g + geom_point(data=cells.df[which(cells.df$slice.realcell==0), ], aes(x=x, y=y, size=entropy), col="black")
+        g <- g + geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate == "NA" ), aes(x=x, y=y, col=slice.state, size=entropy))
+        
+        g <- g + geom_path(data=data.frame(transition.paths[[i]]$i.pseudotime), aes(x=Dim1, y=Dim2), alpha=0.6, col="orange3", size=4, arrow=arrow(ends="last", type = "closed", length = unit(0.25, "inches")))
+        
+        g <- g + SLICE_theme_opts()
+        g <- g + theme(axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5)) 
+        
+        
+        ggsave(filename=paste(context_str, "path-pc-", names(transition.paths)[i], ".pdf", sep=""), width=pdf.w, height=pdf.h) #, dpi=dpi, compression="lzw")
+        
+        print(g)
+        
+      }
+    }
+  }
+  
+  #class(transition.paths) <- "slice.pc.transitions"
+  return(transition.paths)
+}
+
 
 get.PCT.Profiles <- function(es, transitions, context_str="", 
                              do.plot=T, plot.xlabel=NULL, plot.ylabel=NULL, plot.w=2.8, plot.h=1) {
@@ -2258,6 +2467,13 @@ get.PCT.Profiles <- function(es, transitions, context_str="",
   
   #class(transition.profiles) <- "slice.pc.profiles"
   return(transition.profiles)
+}
+
+
+concate.trajectories <- function(...) {
+  
+  
+  
 }
 
 
