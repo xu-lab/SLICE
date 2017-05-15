@@ -16,8 +16,8 @@
 # loading SLICE functions
 library(SLICE)
 
-load(FB)
-load(mm_kappasim)
+
+
 
 
 # use a variable to store the path to the data directory; getwd() functions returns the full path of current working directory
@@ -40,11 +40,10 @@ context_str = paste("SLICE-", data.name, "-", format(Sys.time(), "%b%d_%H_%M_%S"
 
 
 # loading the FB data set; expression profiles with same gene symbol annotations have been averaged
-#load(paste(data.dir, "FB.Rda", sep=""))
+data(FB)
 
 # the expressions, cell info, and gene info are stored as an Biobase::ExpressionSet object
 es <- FB
-
 
 # remove ERCC genes and Ribosomal genes
 ercc.genes <- grep("^ERCC-", rownames(fData(es)), value = TRUE)
@@ -75,7 +74,7 @@ sc <- construct(exprmatrix=as.data.frame(exprs(es)),
 
 # loading the pre-computed mouse gene-gene Kappa similarity matrix
 # The matrix will be loaded into a variable named "km"
-#load(paste(data.dir, "mm_km.Rda", sep=""))
+data(mm_kappasim)
 
 # bootstrap calculation of scEntropy
 sc <- getEntropy(sc, km=km,                             # use the pre-computed kappa similarity matrix of mouse genes
@@ -99,7 +98,7 @@ plotEntropies(sc)
 
 
 # perform PCA using the expression of predicted signature genes and with a high variance (greater than 8 variance in log2 FPKM)
-#signature <- as.character(read.table(file=paste(data.dir, "FB-sig.txt", sep=""), sep="\t", head=T)$GENE)
+# The predicted signature genes are stored in FB.sig in FB.rda in the data folder
 sc <- getRDS(sc, genes.use=FB.sig, method="pca", num_dim=2, log.base=2, do.center=TRUE, do.scale=FALSE, use.cor=TRUE, min.var=8, min.cells=0)
 
 # use the graph-based method in SLICE to infer lineage model
@@ -185,7 +184,7 @@ sc <- getLineageModel(sc, lm.method="clustering", model.type="tree", reverse=F, 
 
 # use the principal-curve method in SLICE to reconstruct cell transitional path following C2->C3
 # results will be plotted on screen and saved in the PDF files with file names containing "path-pc"
-sc <- getTrajectories(sc, method="pc", start=4, end=1, do.trim=T,  do.plot=T, stepwise=T)
+sc <- getTrajectories(sc, method="pc", start=2, end=3, do.trim=T,  do.plot=T, stepwise=T)
 
 # extract and visualize expression profiles of marker genes in the reconstructed principal-curve transitional path
 # results will be plotted on screen and saved in the PDF files with file names containing "path-pc" and "profiles"
