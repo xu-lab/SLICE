@@ -25,7 +25,7 @@ SLICE is an algorithm that utilizes single-cell RNA-seq (scRNA-seq) data to quan
 
 ## Demonstration
 
-* A demonstration of using SLICE to reconstruct a two-branched lung fibroblast differentiation lineage from E16.5 mouse lung single cell data can be found at https://github.com/minzheguo/SINCERA/blob/master/demo/mouselung.e16.5.R. 
+* A demonstration of using SLICE to reconstruct a two-branched lung fibroblast differentiation lineage from E16.5 mouse lung single cell data can be found at https://github.com/minzheguo/SLICE/blob/master/demo/FB.R. 
 
 
 ## Citation
