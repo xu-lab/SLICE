@@ -439,13 +439,13 @@ setMethod("setLineageModel","slice",
 #' @export
 setGeneric("getTrajectories", function(object, method="sp", start, end, 
                                       network="mst", NN.threshold=0.7,  # sp parameters
-                                      do.trim=F, do.stepwise=T,                                     # pc parameters
+                                      do.trim=F, do.stepwise=F,                                     # pc parameters
                                       ...) standardGeneric("getTrajectories"))
 #' @export
 setMethod("getTrajectories","slice", 
           function(object, method="sp", start, end, 
                            network="mst", NN.threshold=0.7, # sp parameters
-                           do.trim=F, do.stepwise=T,                                         # pc parameters
+                           do.trim=F, do.stepwise=F,                                         # pc parameters
                            ...) {
   
               methods <- c("sp","pc")
