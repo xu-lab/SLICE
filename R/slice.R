@@ -35,70 +35,7 @@
 
 # ================
 
-#######################################################
-#                 Resolving Dependencies              #
-#######################################################
 
-if (FALSE) {
-
-if(!require(Biobase)){
-    source("https://bioconductor.org/biocLite.R")
-    biocLite("Biobase")
-}
-if(!require(ggplot2)) {
-    install.packages('ggplot2', dep=T)
-}
-if (!require(igraph)) {
-    install.packages('igraph', dep=T)
-}
-if (!require(reshape2)) {
-    install.packages('reshape2', dep=T)
-}
-if(!require(entropy)){
-	install.packages('entropy', dep=T)
-}
-if(!require(graph)){
-  source("https://bioconductor.org/biocLite.R")
-  biocLite("graph")
-}
-if(!require(BioNet)){
-  source("https://bioconductor.org/biocLite.R")
-  biocLite("BioNet")
-}
-if(!require(cluster)){
-	install.packages('cluster', dep=T)
-}
-if(!require(princurve)){
-    install.packages('princurve', dep=T)
-}
-if(!require(lmtest)){
-  install.packages('lmtest', dep=T)
-}
-if(!require(mgcv)){
-  install.packages('mgcv', dep=T)
-}
-if(!require(gridExtra)){
-  install.packages('gridExtra', dep=T)
-}
-
-
-
-require(gridExtra)
-require(Biobase)
-require(graph)
-require(BioNet)
-require(entropy)
-require(cluster)
-require(ggplot2)
-require(grid)
-require(princurve)
-require(splines)
-require(mgcv)
-require(lmtest)
-require(igraph)
-
-
-}
 
 
 ###########################################################################################################
