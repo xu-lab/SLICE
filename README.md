@@ -14,7 +14,7 @@ SLICE is an algorithm that utilizes single-cell RNA-seq (scRNA-seq) data to quan
 * Then, use devtools to install SINCERA from github
   
   ```
-  devtools::install_github("minzheguo/SLICE")
+  devtools::install_github("xu-lab/SLICE")
   ```
 
 * Use library() to activate SINCERA
