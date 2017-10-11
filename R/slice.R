@@ -286,17 +286,20 @@ setMethod("setRDS","slice",
 #' @param k.max The "k.max" parameter of cluster::clusGap(); used when k is NULL.
 #' @param B The "B" parameter of cluster::clusGap(); used when k is NULL
 #' @param k.opt.method The "method" parameter of cluster::maxSE(); used when k is NULL
+#' @param do.plot Whether or not to plot
 #' @return updated slice object with inferred lineage model in the "model" slot
 #' @export
 setGeneric("getLineageModel", function(object, lm.method="clustering", model.type="tree", reverse=F, ss.method="all", ss.threshold=0.25, # common parameter
                                        wiring.threshold=function(mst) max(mst), community.method="louvain",                # parameters for graph-based method
                                        cluster.method="kmeans", k=NULL, k.max=10, B=100, k.opt.method="firstmax",          # parameters for clustering-based method
+                                       do.plot = F,
                                        ...) standardGeneric("getLineageModel"))
 #' @export
 setMethod("getLineageModel","slice",
           function(object, lm.method="clustering", model.type="tree", reverse=F, ss.method="all", ss.threshold=0.25, # common parameter
                             wiring.threshold=function(mst) max(mst), community.method="louvain",                     # parameters for graph-based method
                             cluster.method="kmeans", k=NULL, k.max=10, B=100, k.opt.method="firstmax",               # parameters for clustering-based method
+                            do.plot = F,
                             ...) {
 
               lmmethods <- c("clustering","graph")
@@ -311,12 +314,12 @@ setMethod("getLineageModel","slice",
                 lm <- getLM.graph(object@data, model.type=model.type, wiring.threshold=wiring.threshold,
                                   community.method=community.method,
                                   ss.method=ss.method, ss.threshold=ss.threshold,
-                                  reverse = reverse, do.plot=T, context_str=object@projname)
+                                  reverse = reverse, do.plot=do.plot, context_str=object@projname)
               } else if (lm.method=="clustering") {
                 lm <- getLM.clustering(object@data, model.type=model.type, cluster.method=cluster.method,
                                        k=k, k.max=k.max, B=B, k.opt.method=k.opt.method,
                                        ss.method=ss.method, ss.threshold=ss.threshold,
-                                       reverse = reverse, do.plot=T, context_str=object@projname)
+                                       reverse = reverse, do.plot=do.plot, context_str=object@projname)
               }
 
 
@@ -1953,8 +1956,9 @@ getLM.clustering <- function(es, model.type="tree", cluster.method="kmeans",
   }
 
 
-  write.table(cbind(CELL=rownames(cells.df), cells.df), file=paste(context_str, "lineage-c.step3-cell_clusters.txt", sep=""), sep="\t", col.names=T, row.names=F)
-
+  if (do.plot) {
+    write.table(cbind(CELL=rownames(cells.df), cells.df), file=paste(context_str, "lineage-c.step3-cell_clusters.txt", sep=""), sep="\t", col.names=T, row.names=F)
+  }
 
   # lineage model
   lineageModel <- igraph::as.directed(stateGraph)

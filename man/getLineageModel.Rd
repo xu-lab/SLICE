@@ -8,7 +8,7 @@ getLineageModel(object, lm.method = "clustering", model.type = "tree",
   reverse = F, ss.method = "all", ss.threshold = 0.25,
   wiring.threshold = function(mst) max(mst), community.method = "louvain",
   cluster.method = "kmeans", k = NULL, k.max = 10, B = 100,
-  k.opt.method = "firstmax", ...)
+  k.opt.method = "firstmax", do.plot = F, ...)
 }
 \arguments{
 \item{object}{Slice object}
@@ -45,6 +45,8 @@ Only take effect when lm.method is "graph"}
 \item{B}{The "B" parameter of cluster::clusGap(); used when k is NULL}
 
 \item{k.opt.method}{The "method" parameter of cluster::maxSE(); used when k is NULL}
+
+\item{do.plot}{Whether or not to plot}
 }
 \value{
 updated slice object with inferred lineage model in the "model" slot
