@@ -10,7 +10,7 @@ Maintainer: Minzhe Guo <minzhe.guo@cchmc.org>
 URL: https://github.com/minzheguo/SLICE
 BugReports: https://github.com/minzheguo/SLICE/issues
 Description: This is the R package of the SLICE algorithm, which utilizes single-cell RNA-seq (scRNA-seq) data to quantitatively measure cellular differentiation states based on single cell entropy and predict cell differentiation lineages via the construction of entropy directed cell trajectories. 
-License: GPL-3
+License: GPL-3 + LICENSE
 LazyData: TRUE
 RoxygenNote: 6.0.1
 Remotes:
