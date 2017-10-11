@@ -5,7 +5,7 @@
 \title{Reconstructing cell trajectories following a specific lineage (start -> end) in the inferred lineage model}
 \usage{
 getTrajectories(object, method = "sp", start, end, network = "mst",
-  NN.threshold = 0.7, do.trim = F, do.stepwise = T, ...)
+  NN.threshold = 0.7, do.trim = F, do.plot = F, do.stepwise = F, ...)
 }
 \arguments{
 \item{object}{Slice object}
@@ -21,6 +21,8 @@ getTrajectories(object, method = "sp", start, end, network = "mst",
 \item{NN.threshold}{Used in the shortest path based method, specifies the distance threshold for determining neighbors of each cell in the path. Default is 0.7 quantile of all edge weights in the network}
 
 \item{do.trim}{Used in the principal curve based method. When set to TRUE, only the curve between the start and end stable states will be returned; otherwise, the whole curve will be returned.}
+
+\item{do.plot}{Whether to plot}
 }
 \value{
 updated slice object with reconstructed cell trajectories in the "transitions" slot.

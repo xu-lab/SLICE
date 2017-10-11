@@ -27,6 +27,6 @@ getPatterns(expr, do.zscore = T, c.method = "pam", k = NULL,
 An object of class "pam" or "kmeans" representing the clustering results.
 }
 \description{
-Given the M1 predicted expression profiles of differentially expressed genes in a transition, 
+Given the M1 predicted expression profiles of differentially expressed genes in a transition,
 the function uses PAM clustering to divide differentially expressed genes into clusters (patterns)
 }

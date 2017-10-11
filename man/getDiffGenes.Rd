@@ -22,7 +22,7 @@ getDiffGenes(profiles, diff.thresh = 0.1, log.base = 2, thresh.exp = 1,
 lineage dependent differentially expressed genes and their associated information, e.g., variance, pvalue, fdr, and M1 predicted expression
 }
 \description{
-given the lineage dependent expression profiles extracted by the getProfiles function, this function first smoothes the expression profile of each gene using cubic regression splines, 
+given the lineage dependent expression profiles extracted by the getProfiles function, this function first smoothes the expression profile of each gene using cubic regression splines,
 fits to two models (M1: changes in the lineage; M0: no change),
 and then uses likelihood ratio test to compare the goodness of fit of the two models and assigns a p-value to each gene
 }

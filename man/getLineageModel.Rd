@@ -19,21 +19,21 @@ getLineageModel(object, lm.method = "clustering", model.type = "tree",
 
 \item{reverse}{If FALSE, infer differentiation lineage model (edge directions follow entropy reduction), if TRUE, infer dedifferentiation lineage model (edge directions follow entropy induction)}
 
-\item{ss.method}{The method for defining core cell set for stable state detection: 
-all - all the cells in a cluster constitute the core cell set; 
-top - cells with scEntropy lower than the ss.threshold quantile of all the values in a cluster constitute the core cell set; 
+\item{ss.method}{The method for defining core cell set for stable state detection:
+all - all the cells in a cluster constitute the core cell set;
+top - cells with scEntropy lower than the ss.threshold quantile of all the values in a cluster constitute the core cell set;
 pcst - cells with scEntropy lower than the ss.threshold quantile of all the values in a cluster constitute the prize nodes, linear prize-collecting steiner tree algorithm is used to approximate an optimal subnetwork, the cells in the subnetwork constitute the core cell set. Stable states are defined as the centroids of the core cell sets.}
 
 \item{ss.threshold}{The threshold used when ss.method is "top" or "pcst". Default: 0.25.}
 
-\item{wiring.threshold}{The threshold for the local wiring procedure in the cell-cell network construction. 
+\item{wiring.threshold}{The threshold for the local wiring procedure in the cell-cell network construction.
 By default, it is set to the longest edge in the minimum spanning treee.
 Only take effect when lm.method is "grpah"}
 
-\item{community.method}{The method for network community detection. 
-Most of the community detection methods implemented in the igraph package are supported, 
-including "fast_greedy", "edge_betweenness", "label_prop", "leading_eigen","louvain","spinglass", "walktrap". 
-If this parameter is set to "auto", the algorithm will perform all the community detection methods and select the one that generates the communities with best modularity. 
+\item{community.method}{The method for network community detection.
+Most of the community detection methods implemented in the igraph package are supported,
+including "fast_greedy", "edge_betweenness", "label_prop", "leading_eigen","louvain","spinglass", "walktrap".
+If this parameter is set to "auto", the algorithm will perform all the community detection methods and select the one that generates the communities with best modularity.
 Only take effect when lm.method is "graph"}
 
 \item{cluster.method}{Use "kmeans" or "pam" to divide cells into clusters. Only take effect when lm.method is "clustering"}
@@ -53,7 +53,7 @@ updated slice object with inferred lineage model in the "model" slot
 SLICE provides two independent methods (clustering-based and graph-based) to perform lineage model inference
 }
 \details{
-The two algorithms both first divide cells into distinct cell clusters (representing cell states or cell types), find the stable state in each cluster, 
+The two algorithms both first divide cells into distinct cell clusters (representing cell states or cell types), find the stable state in each cluster,
 and then infer the lineage model by constructing a directed graph or a directed minimum spanning tree among stable states.
 The directions of edges in the model follow entropy reduction (differentiation model) and entropy induction (dedifferentiation model)
 

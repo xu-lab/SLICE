@@ -20,12 +20,12 @@ Information is stored in slots. Key slots include:
    \item{\code{ident.original}:}{\code{"vector"}, the original identity (cluster/state/type) of single cells provided by the user during object construction}
    \item{\code{entropy}:}{\code{"vector"}, the entropy of single cells  }
    \item{\code{vds}:}{\code{"data.frame"}, a data frame containing the x and y coordinates of cells for visualization  }
-   \item{\code{rds}:}{\code{"data.frame"}, a data frame containing reduced dimensions of each cell   }    
-   \item{\code{model}:}{\code{"list"}, a list containing slice inferred lineage model   }    
-   \item{\code{transitions}:}{\code{"list"}, a list containing slice inferred cell trajectories   }    
-   \item{\code{profiles}:}{\code{"list"}, a list containing slice inferred cell trajectory dependent gene expression profiles   }    
-   \item{\code{projname}:}{\code{"character"}, a string describing the analysis  }    
-     
+   \item{\code{rds}:}{\code{"data.frame"}, a data frame containing reduced dimensions of each cell   }
+   \item{\code{model}:}{\code{"list"}, a list containing slice inferred lineage model   }
+   \item{\code{transitions}:}{\code{"list"}, a list containing slice inferred cell trajectories   }
+   \item{\code{profiles}:}{\code{"list"}, a list containing slice inferred cell trajectory dependent gene expression profiles   }
+   \item{\code{projname}:}{\code{"character"}, a string describing the analysis  }
+
 }
 }
 
