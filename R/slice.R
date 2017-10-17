@@ -117,7 +117,9 @@ construct <- function(exprmatrix, cellidentity=NULL, projname=NULL) {
     rownames(genes) <- object@genenames
     cells <- data.frame(Cell=object@cellnames, state=object@ident)
     rownames(cells) <- object@cellnames
-    object@data <- new("ExpressionSet", exprs=as.matrix(exprmatrix), phenoData=new("AnnotatedDataFrame", data=cells), featureData=new("AnnotatedDataFrame", data=genes))
+    pd <- Biobase::AnnotatedDataFrame(data=cells)
+    fd <- Biobase::AnnotatedDataFrame(data=genes)
+    object@data <- Biobase::ExpressionSet(exprs=as.matrix(exprmatrix), phenoData=pd, featureData=fd)
 
     object@entropies <- data.frame(FAKE=rep(NA, dim(object@data)[2]))
     rownames(object@entropies) <- object@cellnames
