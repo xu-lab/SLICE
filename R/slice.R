@@ -418,14 +418,14 @@ setMethod("getTrajectories","slice", function(
   NN.type="all"
   if (method=="sp") {
     trajectories <- get.SP.Transitions(object@data, model, start, end, network=network, NN.threshold=NN.threshold, NN.type=NN.type,
-                                       do.plot=do.plot, context_str=object@projname)
+                                       do.plot=do.plot, context_str=object@projname, verbose = do.plot)
   } else if (method=="pc") {
     if (do.stepwise==T) {
       trajectories <- get.PC.Transitions.stepwise(object@data, model, start, end, do.trim=do.trim,
-                                                  do.plot=do.plot, context_str=object@projname)
+                                                  do.plot=do.plot, context_str=object@projname, verbose = do.plot)
     } else {
       trajectories <- get.PC.Transitions(object@data, model, start, end, do.trim=do.trim,
-                                         do.plot=do.plot, context_str=object@projname)
+                                         do.plot=do.plot, context_str=object@projname, verbose = do.plot)
     }
   }
   object <- setTrajectories(object, method, trajectories=trajectories)
@@ -1536,7 +1536,7 @@ getLM.graph <- function(es, model.type="tree",
 
 #' @importFrom stats quantile
 #' @importFrom igraph get.edgelist
-get.SP.Transitions <- function(es, model, start, end,  network="mst", NN.threshold=0.8, NN.type="all", do.plot=T, context_str="") {
+get.SP.Transitions <- function(es, model, start, end,  network="mst", NN.threshold=0.8, NN.type="all", do.plot=T, context_str="", verbose = T) {
 
   if (is.null(model$lineageModel) | length(V(model$lineageModel))<2 ) {
     stop("Not enough states")
@@ -1561,7 +1561,9 @@ get.SP.Transitions <- function(es, model, start, end,  network="mst", NN.thresho
   }
   dim.cols <- colnames(cells.df)[dim.cols.idx]
 
-  cat("\nReconstructing shortest-path based cell trajectories following the inferred lineage C", start, "->C", end, "\n", sep="")
+  if (verbose) {
+    cat("\nReconstructing shortest-path based cell trajectories following the inferred lineage C", start, "->C", end, "\n", sep="")
+  }
 
   if (network=="mst") {
     net <- getCellSimilarityNetwork(as.matrix(t(cells.df[, dim.cols])), wiring.threshold = NULL)
