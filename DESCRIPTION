@@ -4,16 +4,36 @@ Title: Determining Cell Differentiation and Lineage based on Single Cell Entropy
 Version: 0.99.0
 Date: 2017-05-15
 Authors@R: person("Minzhe", "Guo", email = "minzhe.guo@cchmc.org", role = c("aut", "cre"))
-Depends: R (>= 3.2.0), Biobase, graph, gridExtra, BioNet, entropy, cluster, ggplot2, 
-    grid, princurve, splines, mgcv, lmtest, igraph, reshape2
+Depends: 
+  R (>= 3.2.0)
+Imports:
+  Biobase, 
+  BioNet, 
+  cluster,
+  entropy, 
+  ggplot2, 
+  graph,
+  grid, 
+  gridExtra,
+  igraph,
+  lmtest,
+  methods,
+  mgcv, 
+  princurve, 
+  reshape2,
+  splines
 Maintainer: Minzhe Guo <minzhe.guo@cchmc.org>
 URL: https://github.com/minzheguo/SLICE
 BugReports: https://github.com/minzheguo/SLICE/issues
-Description: This is the R package of the SLICE algorithm, which utilizes single-cell RNA-seq (scRNA-seq) data to quantitatively measure cellular differentiation states based on single cell entropy and predict cell differentiation lineages via the construction of entropy directed cell trajectories. 
+Description: This is the R package of the SLICE algorithm, 
+  which utilizes single-cell RNA-seq (scRNA-seq) data to quantitatively 
+  measure cellular differentiation states based on single cell entropy 
+  and predict cell differentiation lineages via the construction of entropy 
+  directed cell trajectories. 
 License: GPL-3 + LICENSE
 LazyData: TRUE
 RoxygenNote: 6.0.1
 Remotes:
-    bioc::Biobase,
-    bioc::BioNet
+  bioc::Biobase,
+  bioc::BioNet
 
