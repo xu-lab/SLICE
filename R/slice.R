@@ -399,7 +399,7 @@ setMethod("setLineageModel","slice",
 #' @name getTrajectories
 #' @rdname getTrajectories-methods
 #' @exportMethod getTrajectories
-setGeneric("getTrajectories", function(object, method="sp", start, end,
+setGeneric("getTrajectories", function(object, method=c("sp","pc"), start, end,
                                       network="mst", NN.threshold=0.7,  # sp parameters
                                       do.trim=F, do.plot=F, do.stepwise=F)  # pc parameters
   standardGeneric("getTrajectories"))
@@ -407,34 +407,30 @@ setGeneric("getTrajectories", function(object, method="sp", start, end,
 
 #' @rdname getTrajectories-methods
 #' @aliases getTrajectories,slice-method
-setMethod("getTrajectories","slice",
-          function(object, method=c("sp","pc"), start, end,
-                           network="mst", NN.threshold=0.7, # sp parameters
-                           do.trim=F, do.plot=F, do.stepwise=F) { # pc parameters
-              methods <- match.arg(methods)
+setMethod("getTrajectories","slice", function(
+  object, method=c("sp","pc"), start, end,
+  network="mst", NN.threshold=0.7, # sp parameters
+  do.trim=F, do.plot=F, do.stepwise=F) { # pc parameters
+  method <- match.arg(method)
 
-              model=NULL
-              if (is.null(model)) {
-                model <- object@model
-              }
+  model <- object@model
 
-              trajectories <- NULL
-              NN.type="all"
-              if (method=="sp") {
-                trajectories <- get.SP.Transitions(object@data, model, start, end, network=network, NN.threshold=NN.threshold, NN.type=NN.type,
-                                   do.plot=do.plot, context_str=object@projname)
-              } else if (method=="pc") {
-                if (do.stepwise==T) {
-                  trajectories <- get.PC.Transitions.stepwise(object@data, model, start, end, do.trim=do.trim,
-                                   do.plot=do.plot, context_str=object@projname)
-                } else {
-                  trajectories <- get.PC.Transitions(object@data, model, start, end, do.trim=do.trim,
-                                                     do.plot=do.plot, context_str=object@projname)
-                }
-              }
-              object <- setTrajectories(object, method, trajectories=trajectories)
-              return(object)
-         }
+  NN.type="all"
+  if (method=="sp") {
+    trajectories <- get.SP.Transitions(object@data, model, start, end, network=network, NN.threshold=NN.threshold, NN.type=NN.type,
+                                       do.plot=do.plot, context_str=object@projname)
+  } else if (method=="pc") {
+    if (do.stepwise==T) {
+      trajectories <- get.PC.Transitions.stepwise(object@data, model, start, end, do.trim=do.trim,
+                                                  do.plot=do.plot, context_str=object@projname)
+    } else {
+      trajectories <- get.PC.Transitions(object@data, model, start, end, do.trim=do.trim,
+                                         do.plot=do.plot, context_str=object@projname)
+    }
+  }
+  object <- setTrajectories(object, method, trajectories=trajectories)
+  return(object)
+}
 )
 setGeneric("setTrajectories", function(object, method="sp", trajectories=NULL) standardGeneric("setTrajectories"))
 setMethod("setTrajectories","slice",

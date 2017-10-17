@@ -6,7 +6,7 @@
 \alias{getTrajectories,slice-method}
 \title{Reconstructing cell trajectories following a specific lineage (start -> end) in the inferred lineage model}
 \usage{
-getTrajectories(object, method = "sp", start, end, network = "mst",
+getTrajectories(object, method = c("sp", "pc"), start, end, network = "mst",
   NN.threshold = 0.7, do.trim = F, do.plot = F, do.stepwise = F)
 
 \S4method{getTrajectories}{slice}(object, method = c("sp", "pc"), start, end,
