@@ -77,9 +77,8 @@
 #'    \item{\code{projname}:}{\code{"character"}, a string describing the analysis  }
 #'
 #'}
-#' @name slice
-#' @rdname slice
-#' @aliases slice-class
+#' @name slice-class
+#' @rdname slice-class
 #' @exportClass slice
 #' @importFrom methods new
 slice <- setClass("slice", slots =
@@ -145,9 +144,14 @@ construct <- function(exprmatrix, cellidentity=NULL, projname=NULL) {
 #' @param random.seed The seed for randomness
 #' @return an slice object with calculated entropies in the "entropy" and "entropies" slots
 #' @export
+#' @name getEntropy
+#' @rdname getEntropy-methods
+#' @exportMethod getEntropy
 setGeneric("getEntropy", function(object, clusters=NULL, km=NULL, calculation="bootstrap",
                                   exp.cutoff=1, B.size=1000, B.num=1, clustering.k=0,
                                   random.seed=201602) standardGeneric("getEntropy"))
+#' @rdname getEntropy-methods
+#' @aliases getEntropy,slice-method
 setMethod("getEntropy","slice",
           function(object, clusters=NULL, km=NULL, calculation="bootstrap",
                        exp.cutoff=1, B.size=1000, B.num=1, clustering.k=0,
@@ -221,9 +225,16 @@ setMethod("setEntropy","slice",
 #' @param min.cells The minimum number of expressed cells for a gene to be included in dimension reduction
 #' @return updated slice object with reduced dimensions in the "rds" slot, the first two components are also used to set the "vds" slot for visualization.
 #' @export
+
+#' @name getRDS
+#' @rdname getRDS-methods
+#' @exportMethod getRDS
 setGeneric("getRDS", function(object, genes.use=NULL, method="pca", num_dim=2,
                                   log.base=2, do.center=TRUE, do.scale=FALSE,
                                   use.cor=T, min.var=0.5, min.cells=3) standardGeneric("getRDS"))
+
+#' @rdname getRDS-methods
+#' @aliases getRDS,slice-method
 setMethod("getRDS","slice",
           function(object, genes.use=NULL, method="pca", num_dim=2,
                    log.base=2, do.center=TRUE, do.scale=FALSE,
@@ -303,10 +314,15 @@ setMethod("setRDS","slice",
 #' @param do.plot Whether or not to plot
 #' @return updated slice object with inferred lineage model in the "model" slot
 #' @export
+#' @name getLineageModel
+#' @rdname getLineageModel-methods
+#' @exportMethod getLineageModel
 setGeneric("getLineageModel", function(object, lm.method="clustering", model.type="tree", reverse=F, ss.method="all", ss.threshold=0.25, # common parameter
                                        wiring.threshold=function(mst) max(mst), community.method="louvain",                # parameters for graph-based method
                                        cluster.method="kmeans", k=NULL, k.max=10, B=100, k.opt.method="firstmax",          # parameters for clustering-based method
                                        do.plot = F) standardGeneric("getLineageModel"))
+#' @rdname getLineageModel-methods
+#' @aliases getLineageModel,slice-method
 setMethod("getLineageModel","slice",
           function(object, lm.method="clustering", model.type="tree", reverse=F, ss.method="all", ss.threshold=0.25, # common parameter
                             wiring.threshold=function(mst) max(mst), community.method="louvain",                     # parameters for graph-based method
@@ -390,10 +406,17 @@ setMethod("setLineageModel","slice",
 #' @param do.stepwise Whether to do it stepwise
 #' @return updated slice object with reconstructed cell trajectories in the "transitions" slot.
 #' @export
+#' @name getTrajectories
+#' @rdname getTrajectories-methods
+#' @exportMethod getTrajectories
 setGeneric("getTrajectories", function(object, method="sp", start, end,
                                       network="mst", NN.threshold=0.7,  # sp parameters
                                       do.trim=F, do.plot=F, do.stepwise=F)  # pc parameters
   standardGeneric("getTrajectories"))
+
+
+#' @rdname getTrajectories-methods
+#' @aliases getTrajectories,slice-method
 setMethod("getTrajectories","slice",
           function(object, method=c("sp","pc"), start, end,
                            network="mst", NN.threshold=0.7, # sp parameters
@@ -448,45 +471,44 @@ setMethod("setTrajectories","slice",
 #' @param genes.use If set, only the expression profiles of the specified set of genes will be extracted; otherwise, the expression profiles of all genes will be extracted
 #' @return updated slice object with extracted expression profiles in the "profiles" slot.
 #' @export
+#' @name getProfiles
+#' @rdname getProfiles-methods
+#' @exportMethod getProfiles
 setGeneric("getProfiles", function(object, trajectory.type="sp", genes.use=NULL) standardGeneric("getProfiles"))
-setMethod("getProfiles","slice",
-          function(object, trajectory.type="sp", genes.use=NULL) {
 
-            trajectories=NULL
+#' @rdname getProfiles-methods
+#' @aliases getProfiles,slice-method
+setMethod("getProfiles","slice", function(object, trajectory.type=c("sp", "pc"), genes.use=NULL) {
+  trajectories=NULL
 
-            types <- c("sp","pc")
-            mid <- pmatch(trajectory.type, types)
-            if (is.na(mid)) {
-              stop("Invalid transition.type. Please select \"sp\" or \"pc\"")
-            }
-            trajectory.type=types[mid]
+  trajectory.type <- match.arg(trajectory.type)
 
-            if (is.null(genes.use)) {
-              genes.use <- object@genenames
-            } else {
-              genes.use <- genes.use[which(genes.use %in% object@genenames)]
-            }
+  if (is.null(genes.use)) {
+    genes.use <- object@genenames
+  } else {
+    genes.use <- genes.use[which(genes.use %in% object@genenames)]
+  }
 
-            if (is.null(trajectories)) {
-              if (trajectory.type=="sp") {
-                trajectories <- object@sp.transitions
-              } else if (trajectory.type=="pc") {
-                trajectories <- object@pc.transitions
-              }
-            }
+  if (is.null(trajectories)) {
+    if (trajectory.type=="sp") {
+      trajectories <- object@sp.transitions
+    } else if (trajectory.type=="pc") {
+      trajectories <- object@pc.transitions
+    }
+  }
 
-            profiles <- NULL
-            if (trajectory.type=="sp") {
-              profiles <- get.SPT.Profiles(object@data[genes.use, ], transitions=trajectories$transitions,
-                                           context_str=object@projname, do.plot=T, plot.xlabel=NULL, plot.ylabel=NULL, plot.w=2.8, plot.h=1)
-            } else if (trajectory.type=="pc") {
-              profiles<- get.PCT.Profiles(object@data[genes.use,], transitions=trajectories,
-                               context_str=object@projname, do.plot=T, plot.xlabel=NULL, plot.ylabel=NULL, plot.w=2.8, plot.h=1)
-            }
-            object <- setProfiles(object, trajectory.type=trajectory.type, profiles=profiles)
-            return(object)
-          }
-)
+  profiles <- NULL
+  if (trajectory.type=="sp") {
+    profiles <- get.SPT.Profiles(object@data[genes.use, ], transitions=trajectories$transitions,
+                                 context_str=object@projname, do.plot=T, plot.xlabel=NULL, plot.ylabel=NULL, plot.w=2.8, plot.h=1)
+  } else if (trajectory.type=="pc") {
+    profiles<- get.PCT.Profiles(object@data[genes.use,], transitions=trajectories,
+                                context_str=object@projname, do.plot=T, plot.xlabel=NULL, plot.ylabel=NULL, plot.w=2.8, plot.h=1)
+  }
+  object <- setProfiles(object, trajectory.type=trajectory.type, profiles=profiles)
+  return(object)
+})
+
 setGeneric("setProfiles", function(object, trajectory.type="sp", profiles) standardGeneric("setProfiles"))
 setMethod("setProfiles","slice",
           function(object, trajectory.type="sp", profiles) {
@@ -742,10 +764,15 @@ getPatterns <- function(expr, do.zscore=T, c.method="pam", k=NULL, d.method=func
 #'
 #' @param object Slice object containing the entropies in object@entropies
 #' @export
+#' @name plotEntropies
+#' @rdname plotEntropies-methods
+#' @exportMethod plotEntropies
 setGeneric("plotEntropies", function(object) standardGeneric("plotEntropies"))
 
 #' @importFrom grDevices pdf dev.off
 #' @importFrom gridExtra grid.arrange
+#' @rdname plotEntropies-methods
+#' @aliases plotEntropies,slice-method
 setMethod("plotEntropies","slice",
           function(object) {
               en <- dim(object@entropies)[2]
@@ -788,7 +815,7 @@ setMethod("plotEntropies","slice",
 #' @importFrom cluster pam
 #' @importFrom utils write.table
 #' @importFrom entropy entropy.Dirichlet
-scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation="bootstrap", r=1,
+scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation=c("bootstrap","deterministic"), r=1,
                       exp.cutoff=1, n=1000, p=0, k=0, cmethod="kmeans", prior="pr",
                       random.seed=201602, context_str="", verbose=F) {
 
@@ -796,12 +823,7 @@ scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation="bootstrap", r=
     stop("Please provide either a clustering of genes or a similarity matrix of genes")
   }
 
-  calculation.methods <- c("bootstrap","deterministic")
-  sid <- pmatch(calculation, calculation.methods)
-  if (is.na(sid)) {
-    stop("Please choose bootstrap or deterministic calculation of scEntropy.")
-  }
-  calculation <- calculation.methods[sid]
+  calculation <- pmatch(calculation)
 
   if (!is.null(random.seed)) {
     set.seed(random.seed)
