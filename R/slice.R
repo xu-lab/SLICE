@@ -147,12 +147,11 @@ construct <- function(exprmatrix, cellidentity=NULL, projname=NULL) {
 #' @export
 setGeneric("getEntropy", function(object, clusters=NULL, km=NULL, calculation="bootstrap",
                                   exp.cutoff=1, B.size=1000, B.num=1, clustering.k=0,
-                                  random.seed=201602, ...) standardGeneric("getEntropy"))
-#' @export
+                                  random.seed=201602) standardGeneric("getEntropy"))
 setMethod("getEntropy","slice",
           function(object, clusters=NULL, km=NULL, calculation="bootstrap",
                        exp.cutoff=1, B.size=1000, B.num=1, clustering.k=0,
-                      random.seed=201602, ...) {
+                      random.seed=201602) {
 
               es <- object@data
 
@@ -168,9 +167,10 @@ setMethod("getEntropy","slice",
               return(object)
           }
 )
-setGeneric("setEntropy", function(object, ename="scEntropy.bootstrap", evalues=NULL, ...) standardGeneric("setEntropy"))
+setGeneric("setEntropy", function(object, ename="scEntropy.bootstrap", evalues=NULL) standardGeneric("setEntropy"))
+
 setMethod("setEntropy","slice",
-          function(object, ename="scEntropy.bootstrap", evalues=NULL, ...) {
+          function(object, ename="scEntropy.bootstrap", evalues=NULL) {
             enames <- colnames(object@entropies)
             if (is.null(evalues)) {
               eid <- which(enames == ename)
@@ -223,12 +223,11 @@ setMethod("setEntropy","slice",
 #' @export
 setGeneric("getRDS", function(object, genes.use=NULL, method="pca", num_dim=2,
                                   log.base=2, do.center=TRUE, do.scale=FALSE,
-                                  use.cor=T, min.var=0.5, min.cells=3, ...) standardGeneric("getRDS"))
-#' @export
+                                  use.cor=T, min.var=0.5, min.cells=3) standardGeneric("getRDS"))
 setMethod("getRDS","slice",
           function(object, genes.use=NULL, method="pca", num_dim=2,
                    log.base=2, do.center=TRUE, do.scale=FALSE,
-                   use.cor=T, min.var=0.5, min.cells=3, ...) {
+                   use.cor=T, min.var=0.5, min.cells=3) {
             pcs <- NULL
             if (!is.null(genes.use)) {
               genes.use <- genes.use[which(genes.use %in% object@genenames)]
@@ -243,9 +242,10 @@ setMethod("getRDS","slice",
             return(object)
           }
 )
-setGeneric("setRDS", function(object, rds, vds.x=1, vds.y=2, ...) standardGeneric("setRDS"))
+setGeneric("setRDS", function(object, rds, vds.x=1, vds.y=2) standardGeneric("setRDS"))
+
 setMethod("setRDS","slice",
-          function(object, rds, ...) {
+          function(object, rds) {
 
             object@vds <- rds[, c(vds.x, vds.y)]
             object@rds <- rds
@@ -297,24 +297,21 @@ setMethod("setRDS","slice",
 #'                         Only take effect when lm.method is "graph"
 #' @param cluster.method Use "kmeans" or "pam" to divide cells into clusters. Only take effect when lm.method is "clustering"
 #' @param k The number of cell clusters. If NULL, Gap statistic will be used to determine an optimal k.
-#' @param k.max The "k.max" parameter of cluster::clusGap(); used when k is NULL.
-#' @param B The "B" parameter of cluster::clusGap(); used when k is NULL
-#' @param k.opt.method The "method" parameter of cluster::maxSE(); used when k is NULL
+#' @param k.max The "k.max" parameter of \code{\link[cluster]{clusGap}}; used when k is NULL.
+#' @param B The "B" parameter of \code{\link[cluster]{clusGap}}; used when k is NULL
+#' @param k.opt.method The "method" parameter of \code{\link[cluster]{maxSE}}; used when k is NULL
 #' @param do.plot Whether or not to plot
 #' @return updated slice object with inferred lineage model in the "model" slot
 #' @export
 setGeneric("getLineageModel", function(object, lm.method="clustering", model.type="tree", reverse=F, ss.method="all", ss.threshold=0.25, # common parameter
                                        wiring.threshold=function(mst) max(mst), community.method="louvain",                # parameters for graph-based method
                                        cluster.method="kmeans", k=NULL, k.max=10, B=100, k.opt.method="firstmax",          # parameters for clustering-based method
-                                       do.plot = F,
-                                       ...) standardGeneric("getLineageModel"))
-#' @export
+                                       do.plot = F) standardGeneric("getLineageModel"))
 setMethod("getLineageModel","slice",
           function(object, lm.method="clustering", model.type="tree", reverse=F, ss.method="all", ss.threshold=0.25, # common parameter
                             wiring.threshold=function(mst) max(mst), community.method="louvain",                     # parameters for graph-based method
                             cluster.method="kmeans", k=NULL, k.max=10, B=100, k.opt.method="firstmax",               # parameters for clustering-based method
-                            do.plot = F,
-                            ...) {
+                            do.plot = F) {
 
               lmmethods <- c("clustering","graph")
               mid <- pmatch(lm.method, lmmethods)
@@ -341,9 +338,9 @@ setMethod("getLineageModel","slice",
               return(object)
           }
 )
-setGeneric("setLineageModel", function(object, lm.method="clustering", lm=NULL, ...) standardGeneric("setLineageModel"))
+setGeneric("setLineageModel", function(object, lm.method="clustering", lm=NULL) standardGeneric("setLineageModel"))
 setMethod("setLineageModel","slice",
-          function(object, lm.method="clustering", lm=NULL, ...) {
+          function(object, lm.method="clustering", lm=NULL) {
             if (is.null(lm)) {
               if (lm.method=="clustering") {
                 if(is.null(object@cmodel)) {
@@ -390,25 +387,18 @@ setMethod("setLineageModel","slice",
 #' @param NN.threshold Used in the shortest path based method, specifies the distance threshold for determining neighbors of each cell in the path. Default is 0.7 quantile of all edge weights in the network
 #' @param do.trim Used in the principal curve based method. When set to TRUE, only the curve between the start and end stable states will be returned; otherwise, the whole curve will be returned.
 #' @param do.plot Whether to plot
+#' @param do.stepwise Whether to do it stepwise
 #' @return updated slice object with reconstructed cell trajectories in the "transitions" slot.
 #' @export
 setGeneric("getTrajectories", function(object, method="sp", start, end,
                                       network="mst", NN.threshold=0.7,  # sp parameters
-                                      do.trim=F, do.plot=F, do.stepwise=F,                                     # pc parameters
-                                      ...) standardGeneric("getTrajectories"))
-#' @export
+                                      do.trim=F, do.plot=F, do.stepwise=F)  # pc parameters
+  standardGeneric("getTrajectories"))
 setMethod("getTrajectories","slice",
-          function(object, method="sp", start, end,
+          function(object, method=c("sp","pc"), start, end,
                            network="mst", NN.threshold=0.7, # sp parameters
-                           do.trim=F, do.plot=F, do.stepwise=F,                                         # pc parameters
-                           ...) {
-
-              methods <- c("sp","pc")
-              mid <- pmatch(method, methods)
-              if (is.na(mid)) {
-                stop("Invalid method. Please select \"sp\" or \"pc\"")
-              }
-              method=methods[mid]
+                           do.trim=F, do.plot=F, do.stepwise=F) { # pc parameters
+              methods <- match.arg(methods)
 
               model=NULL
               if (is.null(model)) {
@@ -433,9 +423,9 @@ setMethod("getTrajectories","slice",
               return(object)
          }
 )
-setGeneric("setTrajectories", function(object, method="sp", trajectories=NULL, ...) standardGeneric("setTrajectories"))
+setGeneric("setTrajectories", function(object, method="sp", trajectories=NULL) standardGeneric("setTrajectories"))
 setMethod("setTrajectories","slice",
-          function(object, method="sp", trajectories=NULL, ...) {
+          function(object, method="sp", trajectories=NULL) {
             if (method=="sp") {
               object@sp.transitions <- trajectories
               object@transitions <- trajectories
@@ -458,10 +448,9 @@ setMethod("setTrajectories","slice",
 #' @param genes.use If set, only the expression profiles of the specified set of genes will be extracted; otherwise, the expression profiles of all genes will be extracted
 #' @return updated slice object with extracted expression profiles in the "profiles" slot.
 #' @export
-setGeneric("getProfiles", function(object, trajectory.type="sp", genes.use=NULL, ...) standardGeneric("getProfiles"))
-#' @export
+setGeneric("getProfiles", function(object, trajectory.type="sp", genes.use=NULL) standardGeneric("getProfiles"))
 setMethod("getProfiles","slice",
-          function(object, trajectory.type="sp", genes.use=NULL, ...) {
+          function(object, trajectory.type="sp", genes.use=NULL) {
 
             trajectories=NULL
 
@@ -498,9 +487,9 @@ setMethod("getProfiles","slice",
             return(object)
           }
 )
-setGeneric("setProfiles", function(object, trajectory.type="sp", profiles, ...) standardGeneric("setProfiles"))
+setGeneric("setProfiles", function(object, trajectory.type="sp", profiles) standardGeneric("setProfiles"))
 setMethod("setProfiles","slice",
-          function(object, trajectory.type="sp", profiles, ...) {
+          function(object, trajectory.type="sp", profiles) {
             if (trajectory.type=="sp") {
               object@sp.profiles <- profiles
               object@profiles <- object@sp.profiles
