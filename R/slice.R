@@ -255,25 +255,22 @@ setMethod("getRDS","slice",
 )
 setGeneric("setRDS", function(object, rds, vds.x=1, vds.y=2) standardGeneric("setRDS"))
 
-setMethod("setRDS","slice",
-          function(object, rds) {
+setMethod("setRDS","slice", function(object, rds, vds.x=1, vds.y=2) {
+  object@vds <- rds[, c(vds.x, vds.y)]
+  object@rds <- rds
 
-            object@vds <- rds[, c(vds.x, vds.y)]
-            object@rds <- rds
+  # for compatibility
+  vds.idx <- which(substr(colnames(pData(object@data)), 1, 3) == "Dim")
+  if (length(vds.idx)>0) {
+    pData(object@data) <- pData(object@data)[, -vds.idx]
+  }
+  pData(object@data) <- cbind(pData(object@data), rds)
 
-            # for compatibility
-            vds.idx <- which(substr(colnames(pData(object@data)), 1, 3) == "Dim")
-            if (length(vds.idx)>0) {
-              pData(object@data) <- pData(object@data)[, -vds.idx]
-            }
-            pData(object@data) <- cbind(pData(object@data), rds)
+  pData(object@data)$x <- rds[, 1]
+  pData(object@data)$y <- rds[, 2]
 
-            pData(object@data)$x <- rds[, 1]
-            pData(object@data)$y <- rds[, 2]
-
-            return(object)
-          }
-)
+  return(object)
+})
 
 
 
