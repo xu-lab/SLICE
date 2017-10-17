@@ -30,7 +30,7 @@ Description: This is the R package of the SLICE algorithm,
   measure cellular differentiation states based on single cell entropy 
   and predict cell differentiation lineages via the construction of entropy 
   directed cell trajectories. 
-License: GPL-3 + LICENSE
+License: GPL-3
 LazyData: TRUE
 RoxygenNote: 6.0.1
 Remotes:
