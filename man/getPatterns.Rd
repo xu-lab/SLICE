@@ -5,8 +5,8 @@
 \title{Discover lineage dependent temporal patterns}
 \usage{
 getPatterns(expr, do.zscore = T, c.method = "pam", k = NULL,
-  d.method = function(x) as.dist((1 - cor(t(x)))/2), do.plot = T,
-  plot.filename = NULL)
+  d.method = function(x) stats::as.dist((1 - stats::cor(t(x)))/2),
+  do.plot = T, plot.filename = NULL)
 }
 \arguments{
 \item{expr}{The M1 predicted expression profiles of differentially expressed genes in a transition}
@@ -15,7 +15,7 @@ getPatterns(expr, do.zscore = T, c.method = "pam", k = NULL,
 
 \item{c.method}{The algorithm to find pattern clusters, currently support "pam" and "kmeans"}
 
-\item{k}{The number of patterns to be discovered; if NULL, gap statistic (cluster::clusGap) will be used to determine an optimal k; parameters of cluster::clusGap are set as follows: k.max=10, B=50}
+\item{k}{The number of patterns to be discovered; if NULL, gap statistic \code{\link[cluster]{clusGap}} will be used to determine an optimal k; parameters of cluster::clusGap are set as follows: k.max=10, B=50}
 
 \item{d.method}{The distance method}
 

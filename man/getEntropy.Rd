@@ -6,10 +6,12 @@
 \usage{
 getEntropy(object, clusters = NULL, km = NULL, calculation = "bootstrap",
   exp.cutoff = 1, B.size = 1000, B.num = 1, clustering.k = 0,
-  random.seed = 201602, ...)
+  random.seed = 201602)
 }
 \arguments{
 \item{object}{Slice object}
+
+\item{clusters}{A data frame containing the functional clustering of genes; contains two columns "GENE" - official NCBI gene symbols and "CLUSTER" - cluster memberships.}
 
 \item{km}{A symmetric matrix encoding the functional similarity of genes; the row names and column names must be official NCBI gene symbols.}
 
@@ -24,8 +26,6 @@ getEntropy(object, clusters = NULL, km = NULL, calculation = "bootstrap",
 \item{clustering.k}{The number of functional clusters}
 
 \item{random.seed}{The seed for randomness}
-
-\item{cluster}{A data frame containing the functional clustering of genes; contains two columns "GENE" - official NCBI gene symbols and "CLUSTER" - cluster memberships.}
 }
 \value{
 an slice object with calculated entropies in the "entropy" and "entropies" slots

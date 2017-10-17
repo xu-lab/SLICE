@@ -4,7 +4,7 @@
 \alias{plotEntropies}
 \title{Visualize and compare entropies}
 \usage{
-plotEntropies(object, ...)
+plotEntropies(object)
 }
 \arguments{
 \item{object}{Slice object containing the entropies in object@entropies}

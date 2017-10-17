@@ -12,6 +12,8 @@ getDiffGenes(profiles, diff.thresh = 0.1, log.base = 2, thresh.exp = 1,
 
 \item{diff.thresh}{The FDR threshold for significance}
 
+\item{log.base}{The log base}
+
 \item{thresh.exp}{The expression threshold}
 
 \item{thresh.cell}{The cell number threshold}

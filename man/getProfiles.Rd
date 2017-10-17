@@ -4,7 +4,7 @@
 \alias{getProfiles}
 \title{Exract lineage dependent gene expression profiles}
 \usage{
-getProfiles(object, trajectory.type = "sp", genes.use = NULL, ...)
+getProfiles(object, trajectory.type = "sp", genes.use = NULL)
 }
 \arguments{
 \item{object}{Slice object}

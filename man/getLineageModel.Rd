@@ -8,7 +8,7 @@ getLineageModel(object, lm.method = "clustering", model.type = "tree",
   reverse = F, ss.method = "all", ss.threshold = 0.25,
   wiring.threshold = function(mst) max(mst), community.method = "louvain",
   cluster.method = "kmeans", k = NULL, k.max = 10, B = 100,
-  k.opt.method = "firstmax", do.plot = F, ...)
+  k.opt.method = "firstmax", do.plot = F)
 }
 \arguments{
 \item{object}{Slice object}
@@ -40,11 +40,11 @@ Only take effect when lm.method is "graph"}
 
 \item{k}{The number of cell clusters. If NULL, Gap statistic will be used to determine an optimal k.}
 
-\item{k.max}{The "k.max" parameter of cluster::clusGap(); used when k is NULL.}
+\item{k.max}{The "k.max" parameter of \code{\link[cluster]{clusGap}}; used when k is NULL.}
 
-\item{B}{The "B" parameter of cluster::clusGap(); used when k is NULL}
+\item{B}{The "B" parameter of \code{\link[cluster]{clusGap}}; used when k is NULL}
 
-\item{k.opt.method}{The "method" parameter of cluster::maxSE(); used when k is NULL}
+\item{k.opt.method}{The "method" parameter of \code{\link[cluster]{maxSE}}; used when k is NULL}
 
 \item{do.plot}{Whether or not to plot}
 }
