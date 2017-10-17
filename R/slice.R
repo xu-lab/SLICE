@@ -54,16 +54,26 @@
 #'
 #'@section Slots:
 #'  \describe{
+#'    \item{\code{cellnames}:}{TODO}
+#'    \item{\code{genenames}:}{TODO}
+#'    \item{\code{exprmatrix}:}{TODO}
 #'    \item{\code{data}:}{\code{"ExpressionSet"}, the scRNA-seq data in ExpressionSet format, encoding the expression matrix, and cell and gene information }
 #'    \item{\code{ident}:}{\code{"vector"}, the identity (cluster/state/type) of cells  }
 #'    \item{\code{ident.slice}:}{\code{"vector"}, the identity (cluster/state/type) of single cells inferred by SLICE  }
 #'    \item{\code{ident.original}:}{\code{"vector"}, the original identity (cluster/state/type) of single cells provided by the user during object construction}
 #'    \item{\code{entropy}:}{\code{"vector"}, the entropy of single cells  }
+#'    \item{\code{entropies}:}{TODO}
 #'    \item{\code{vds}:}{\code{"data.frame"}, a data frame containing the x and y coordinates of cells for visualization  }
 #'    \item{\code{rds}:}{\code{"data.frame"}, a data frame containing reduced dimensions of each cell   }
 #'    \item{\code{model}:}{\code{"list"}, a list containing slice inferred lineage model   }
+#'    \item{\code{gmodel}:}{TODO}
+#'    \item{\code{cmodel}:}{TODO}
 #'    \item{\code{transitions}:}{\code{"list"}, a list containing slice inferred cell trajectories   }
+#'    \item{\code{sp.transitions}:}{TODO}
+#'    \item{\code{pc.transitions}:}{TODO}
 #'    \item{\code{profiles}:}{\code{"list"}, a list containing slice inferred cell trajectory dependent gene expression profiles   }
+#'    \item{\code{sp.profiles}:}{TODO}
+#'    \item{\code{pc.profiles}:}{TODO}
 #'    \item{\code{projname}:}{\code{"character"}, a string describing the analysis  }
 #'
 #'}
@@ -71,7 +81,7 @@
 #' @rdname slice
 #' @aliases slice-class
 #' @exportClass slice
-
+#' @importFrom methods new
 slice <- setClass("slice", slots =
                      c(cellnames="vector", genenames="vector", exprmatrix="data.frame",
                        data="ANY", ident="factor",
