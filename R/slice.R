@@ -120,7 +120,7 @@ construct <- function(exprmatrix, cellidentity=NULL, projname=NULL) {
     rownames(cells) <- object@cellnames
     pd <- Biobase::AnnotatedDataFrame(data=cells)
     fd <- Biobase::AnnotatedDataFrame(data=genes)
-    object@data <- Biobase::ExpressionSet(exprs=as.matrix(exprmatrix), phenoData=pd, featureData=fd)
+    object@data <- Biobase::ExpressionSet(as.matrix(exprmatrix), phenoData=pd, featureData=fd)
 
     object@entropies <- data.frame(FAKE=rep(NA, dim(object@data)[2]))
     rownames(object@entropies) <- object@cellnames
