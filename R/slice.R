@@ -102,6 +102,8 @@ slice <- setClass("slice", slots =
 #' @param cellidentity A vector encoding the original identity of cells (e.g., time information or cell types); if not set, the default is a vector of "cell"
 #' @param projname A string describing the analysis; if not set, the default value is "SLICE-" with timestamp information
 #' @return the constructed and initialized slice object
+#'
+#' @importFrom Biobase AnnotatedDataFrame ExpressionSet
 #' @export
 construct <- function(exprmatrix, cellidentity=NULL, projname=NULL) {
 
@@ -522,10 +524,14 @@ setMethod("setProfiles","slice",
 #'
 #' @param profiles The lineage dependent gene expression profiles
 #' @param diff.thresh The FDR threshold for significance
+#' @param log.base The log base
 #' @param thresh.exp The expression threshold
 #' @param thresh.cell The cell number threshold
 #' @param thresh.var The variance threshold
 #' @return lineage dependent differentially expressed genes and their associated information, e.g., variance, pvalue, fdr, and M1 predicted expression
+#'
+#' @importFrom stats p.adjust
+#'
 #' @export
 getDiffGenes <- function(profiles, diff.thresh=0.1, log.base=2, thresh.exp=1, thresh.cell=2, thresh.var=0.5) {
 
@@ -596,7 +602,7 @@ getDiffGenes <- function(profiles, diff.thresh=0.1, log.base=2, thresh.exp=1, th
             }
 
             diffgenes <- diff[diff.idx, ]
-            diffgenes$fdr <- p.adjust(diffgenes$pvalue, method="fdr")
+            diffgenes$fdr <- stats::p.adjust(diffgenes$pvalue, method="fdr")
 
             diff[as.character(diffgenes$Gene), "fdr"] <- diffgenes$fdr
 
@@ -632,13 +638,19 @@ getDiffGenes <- function(profiles, diff.thresh=0.1, log.base=2, thresh.exp=1, th
 #' @param expr The M1 predicted expression profiles of differentially expressed genes in a transition
 #' @param do.zscore If TRUE, perform gene based zscore transformation prior to clustering
 #' @param c.method The algorithm to find pattern clusters, currently support "pam" and "kmeans"
-#' @param k The number of patterns to be discovered; if NULL, gap statistic (cluster::clusGap) will be used to determine an optimal k; parameters of cluster::clusGap are set as follows: k.max=10, B=50
+#' @param k The number of patterns to be discovered; if NULL, gap statistic \code{\link[cluster]{clusGap}} will be used to determine an optimal k; parameters of cluster::clusGap are set as follows: k.max=10, B=50
 #' @param d.method The distance method
 #' @param do.plot Whether to plot discovered patterns
 #' @param plot.filename The file name of the plot; if NULL, plot to the screen
 #' @return An object of class "pam" or "kmeans" representing the clustering results.
+#'
+#' @importFrom reshape2 melt
+#' @importFrom cluster pam clusGap maxSE
+#' @importFrom stats kmeans sd as.dist cor
+#' @importFrom graphics plot abline text
+#'
 #' @export
-getPatterns <- function(expr, do.zscore=T, c.method="pam", k=NULL, d.method=function(x) as.dist((1 - cor(t(x)))/2), do.plot=T, plot.filename=NULL) {
+getPatterns <- function(expr, do.zscore=T, c.method="pam", k=NULL, d.method=function(x) stats::as.dist((1 - stats::cor(t(x)))/2), do.plot=T, plot.filename=NULL) {
 
 	cat("\nDiscovering lineage dependent temporal patterns\n")
 
@@ -647,10 +659,10 @@ getPatterns <- function(expr, do.zscore=T, c.method="pam", k=NULL, d.method=func
     if (do.zscore==T) {
         zscore_helper <- function(x) {
             x <- as.numeric(x)
-            if (sd(x)==0) {
+            if (stats::sd(x)==0) {
                 x <- rep(0, length(X))
             } else {
-                x <- (x-mean(x, na.rm = T))/sd(x, na.rm = T)
+                x <- (x-mean(x, na.rm = T))/stats::sd(x, na.rm = T)
             }
             return(x)
         }
@@ -664,23 +676,23 @@ getPatterns <- function(expr, do.zscore=T, c.method="pam", k=NULL, d.method=func
         k.max <- min(dim(expr)[1]-1, 10)
         B=50
         if (c.method=="pam") {
-            gskmn <- cluster::clusGap(as.matrix(mat), FUN = pam,  K.max = k.max, B = B)
+            gskmn <- cluster::clusGap(as.matrix(mat), FUN = cluster::pam,  K.max = k.max, B = B)
         } else if (c.method=="kmeans") {
-            gskmn <- cluster::clusGap(as.matrix(mat), FUN = kmeans,  K.max = k.max, B = B)
+            gskmn <- cluster::clusGap(as.matrix(mat), FUN = stats::kmeans,  K.max = k.max, B = B)
         }
-        plot(gskmn, main = paste("Number of temporal patterns determined by\n Gap statistic (FUN=",c.method,", k.max=", k.max, ", B=",B, ")", sep=""))
+        graphics::plot(gskmn, main = paste("Number of temporal patterns determined by\n Gap statistic (FUN=",c.method,", k.max=", k.max, ", B=",B, ")", sep=""))
 
         # default: firstmax rule
-        k <- maxSE(f=as.numeric(gskmn$Tab[,"gap"]), SE.f=as.numeric(gskmn$Tab[,"SE.sim"]), method="firstmax")
-        abline(v=k, col="blue", lty=2, lwd=3)
-        text(k, min(gskmn$Tab[,"gap"]), paste(" k=",k, "\n(firstmax)", sep=""), col="blue", adj = c(-.1, -.1), cex=1.1)
+        k <- cluster::maxSE(f=as.numeric(gskmn$Tab[,"gap"]), SE.f=as.numeric(gskmn$Tab[,"SE.sim"]), method="firstmax")
+        graphics::abline(v=k, col="blue", lty=2, lwd=3)
+        graphics::text(k, min(gskmn$Tab[,"gap"]), paste(" k=",k, "\n(firstmax)", sep=""), col="blue", adj = c(-.1, -.1), cex=1.1)
     }
 
     if (c.method == "pam") {
-        db <- pam(as.matrix(mat), k)
+        db <- cluster::pam(as.matrix(mat), k)
         cluster <- db$clustering
     } else if (c.method=="kmeans") {
-        db <- kmeans(as.matrix(mat), k)
+        db <- stats::kmeans(as.matrix(mat), k)
         cluster <- db$cluster
     }
 
@@ -699,7 +711,7 @@ getPatterns <- function(expr, do.zscore=T, c.method="pam", k=NULL, d.method=func
         times <- seq(0, 1, length.out=dim(expr)[2])
         ptime <- data.frame(cell=colnames(expr), ptime=times)
 
-        dd.melt <- melt(dd, id.vars = c("gene", "cluster"))
+        dd.melt <- reshape2::melt(dd, id.vars = c("gene", "cluster"))
         dd.melt <- merge(dd.melt, ptime, by.x="variable", by.y="cell")
         dd.melt$cluster <- paste("Pattern ", dd.melt$cluster, sep="")
 
@@ -726,7 +738,7 @@ getPatterns <- function(expr, do.zscore=T, c.method="pam", k=NULL, d.method=func
         if (is.null(plot.filename)) {
             print(g)
         } else {
-            ggsave(file=paste(plot.filename, ".pdf", sep=""), width=plot.w, height=plot.h)
+            ggsave(filename = paste(plot.filename, ".pdf", sep=""), width=plot.w, height=plot.h)
         }
     }
 
@@ -741,10 +753,12 @@ getPatterns <- function(expr, do.zscore=T, c.method="pam", k=NULL, d.method=func
 #'
 #' @param object Slice object containing the entropies in object@entropies
 #' @export
-setGeneric("plotEntropies", function(object, ...) standardGeneric("plotEntropies"))
-#' @export
+setGeneric("plotEntropies", function(object) standardGeneric("plotEntropies"))
+
+#' @importFrom grDevices pdf dev.off
+#' @importFrom gridExtra grid.arrange
 setMethod("plotEntropies","slice",
-          function(object, ...) {
+          function(object) {
               en <- dim(object@entropies)[2]
               ee <- data.frame(object@entropies, ident=object@ident)
 
@@ -754,7 +768,7 @@ setMethod("plotEntropies","slice",
                   theme(panel.border=element_rect(color="grey", fill=NA, size=0.5))
               }
 
-              pdf(file=paste(object@projname, "entropies.pdf", sep=""), width=4*en, height=3*en)
+              grDevices::pdf(file=paste(object@projname, "entropies.pdf", sep=""), width=4*en, height=3*en)
 
               gs <- list()
               for (i in 1:en) {
@@ -767,9 +781,9 @@ setMethod("plotEntropies","slice",
                   }
               }
 
-              grid.arrange(grobs=gs, ncol=en)
+              gridExtra::grid.arrange(grobs=gs, ncol=en)
 
-              dev.off()
+              grDevices::dev.off()
           }
 )
 
@@ -781,7 +795,10 @@ setMethod("plotEntropies","slice",
 #              Detailed Implementations               #
 #######################################################
 
-
+#' @importFrom stats aggregate kmeans as.dist cor
+#' @importFrom cluster pam
+#' @importFrom utils write.table
+#' @importFrom entropy entropy.Dirichlet
 scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation="bootstrap", r=1,
                       exp.cutoff=1, n=1000, p=0, k=0, cmethod="kmeans", prior="pr",
                       random.seed=201602, context_str="", verbose=F) {
@@ -843,7 +860,7 @@ scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation="bootstrap", r=
         genes <- genes[which(genes %in% rownames(km))] # keep genes with annotation
         sim <- km[as.character(genes), as.character(genes)]
         sim.dist <- 1-sim
-        sim.dist <- as.dist(sim.dist)
+        sim.dist <- stats::as.dist(sim.dist)
 
         if (k<2) {
           kk = max(2, floor(sqrt(dim(sim)[1]/2)))
@@ -852,9 +869,9 @@ scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation="bootstrap", r=
         }
 
         if (cmethod=="pam") {
-          gclus <- pam(sim.dist, kk, cluster.only=TRUE)
+          gclus <- cluster::pam(sim.dist, kk, cluster.only=TRUE)
         } else if (cmethod=="kmeans") {
-          gclus <- kmeans(sim.dist, centers=kk, iter.max=10, nstart=1)$cluster
+          gclus <- stats::kmeans(sim.dist, centers=kk, iter.max=10, nstart=1)$cluster
         } else {
           stop("Please use \"pam\" or \"kmeans\" in cmethod.\n")
         }
@@ -871,7 +888,7 @@ scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation="bootstrap", r=
       }
 
       if (verbose) {
-        write.table(gclus, file=paste(file.prefix, rr, "-1-gclus.0.txt", sep=""), sep="\t", col.names=T, row.names=F)
+        utils::write.table(gclus, file=paste(file.prefix, rr, "-1-gclus.0.txt", sep=""), sep="\t", col.names=T, row.names=F)
       }
 
       gclus <- gclus[order(gclus$CLUSTER), ]
@@ -882,8 +899,8 @@ scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation="bootstrap", r=
       gclus.summary <- gclus.summary[order(gclus.summary$CLUSTER), ]
 
       if (verbose) {
-        write.table(gclus, file=paste(file.prefix, rr, "-1-gclus.1.txt", sep=""), sep="\t", col.names=T, row.names=F)
-        write.table(gclus.summary, file=paste(file.prefix, rr, "-1-gclus.2.txt", sep=""), sep="\t", col.names=T, row.names=F)
+        utils::write.table(gclus, file=paste(file.prefix, rr, "-1-gclus.1.txt", sep=""), sep="\t", col.names=T, row.names=F)
+        utils::write.table(gclus.summary, file=paste(file.prefix, rr, "-1-gclus.2.txt", sep=""), sep="\t", col.names=T, row.names=F)
       }
 
       if (verbose) {
@@ -898,14 +915,14 @@ scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation="bootstrap", r=
 
 
       if (verbose) {
-        write.table(data.frame(SYMBOL=rownames(g.exp.m), CLUSTER=gclus$CLUSTER, g.exp.m), file=paste(file.prefix, rr, "-2-exp.m.txt", sep=""), sep="\t", row.names=F, col.names=T)
+        utils::write.table(data.frame(SYMBOL=rownames(g.exp.m), CLUSTER=gclus$CLUSTER, g.exp.m), file=paste(file.prefix, rr, "-2-exp.m.txt", sep=""), sep="\t", row.names=F, col.names=T)
       }
 
-      y <- aggregate(g.exp.m.b, by=list(gclus$CLUSTER), sum)
+      y <- stats::aggregate(g.exp.m.b, by=list(gclus$CLUSTER), sum)
       y <- y[order(y[,1]), ]
 
       if (verbose) {
-        write.table(y, file=paste(file.prefix, rr, "-3-exp.cnts.txt", sep=""), sep="\t", row.names=F, col.names=T)
+        utils::write.table(y, file=paste(file.prefix, rr, "-3-exp.cnts.txt", sep=""), sep="\t", row.names=F, col.names=T)
       }
 
       y.clusters <- y[, 1]
@@ -1020,7 +1037,7 @@ expressed.random <- function(exp.m, exp.cutoff=1, k=0, p=0.5) {
   return(genelists)
 }
 
-
+#' @importFrom stats cor prcomp
 reduceExpressionSpace <- function(es, method="pca", num_dim=2,
                                   log.base=2, do.center=TRUE, do.scale=FALSE,
                                   use.cor=T, min.var=0.5, min.cells=3,
@@ -1075,13 +1092,13 @@ reduceExpressionSpace <- function(es, method="pca", num_dim=2,
   pcs <- NULL
 
   if (use.cor==TRUE) {
-    mat <- cor(exp.m)
+    mat <- stats::cor(exp.m)
   } else {
     mat <- t(exp.m)
   }
   rm(exp.m)
 
-  pca <- prcomp(mat, retx = TRUE, center = F, scale. = F)
+  pca <- stats::prcomp(mat, retx = TRUE, center = F, scale. = F)
   pcs <- pca$x[, 1:num_dim]
 
 
@@ -1091,20 +1108,17 @@ reduceExpressionSpace <- function(es, method="pca", num_dim=2,
   return(pcs)
 }
 
-
+#' @importFrom utils write.table
+#' @importFrom igraph induced.subgraph igraph.to.graphNEL add_vertices
+#' @importFrom BioNet rmSelfLoops runFastHeinz
+#' @importFrom graph nodes
 getLM.graph <- function(es, model.type="tree",
                         wiring.threshold=function(mst) max(mst),
                         community.method="louvain",
-                        ss.method="all", ss.threshold=0.25,
+                        ss.method=c("all", "top", "pcst"), ss.threshold=0.25,
                         reverse = FALSE,
                         do.plot=T, context_str="") {
-
-  ssmethods <- c("all", "top", "pcst")
-  ssid <- pmatch(ss.method, ssmethods)
-  if (is.na(ssid)) {
-    stop("Invalid stable state definition method.")
-  }
-  ss.method <- ssmethods[ssid]
+  ss.method <- match.arg(ss.method)
 
   if (is.null(pData(es)$state)) {
     stop("Missing column pData(es)$state, which encodes the type/state/cluster information of cells.")
@@ -1297,7 +1311,7 @@ getLM.graph <- function(es, model.type="tree",
     s.cells <- rownames(cells.df)[which(cells.df$slice.state==state)]
     if (length(s.cells) > 1) {
       s.vids <- which(V(gp)$name %in% s.cells)
-      s.gp <- induced.subgraph(gp, s.vids)
+      s.gp <- igraph::induced.subgraph(gp, s.vids)
 
       s.vertices <- V(s.gp)$name
 
@@ -1319,13 +1333,12 @@ getLM.graph <- function(es, model.type="tree",
           s.gp.2 <- s.gp
           E(s.gp.2)$weight <- E(s.gp)$weight/max(E(s.gp)$weight) # scale the distance to [0,1]
 
-          s.gpNEL <- NULL
-          s.gpNEL <- igraph.to.graphNEL(s.gp.2)
+          s.gpNEL <- igraph::igraph.to.graphNEL(s.gp.2)
 
           # library(BioNet)
-          s.gpNEL <- rmSelfLoops(s.gpNEL)
-          s.module <- runFastHeinz(s.gpNEL, s.scores)
-          s.ss <- nodes(s.module)
+          s.gpNEL <- BioNet::rmSelfLoops(s.gpNEL)
+          s.module <- BioNet::runFastHeinz(s.gpNEL, s.scores)
+          s.ss <- graph::nodes(s.module)
         } else if (ss.method=="top") {
           s.ss <- names(s.scores)[which(as.numeric(s.scores)>0)]
         } else if (ss.method=="all") {
@@ -1359,7 +1372,7 @@ getLM.graph <- function(es, model.type="tree",
     cells.df <- rbind(cells.df, s.ss.df)
   }
 
-  write.table(cbind(CELL=rownames(cells.df), cells.df), file=paste(context_str, "lineage-g.step4-cell_clusters.txt", sep=""), sep="\t", col.names=T, row.names=F)
+  utils::write.table(cbind(CELL=rownames(cells.df), cells.df), file=paste(context_str, "lineage-g.step4-cell_clusters.txt", sep=""), sep="\t", col.names=T, row.names=F)
 
 
   ss.cells.df <- cells.df[which(cells.df$slice.realcell==0), ]
@@ -1372,7 +1385,7 @@ getLM.graph <- function(es, model.type="tree",
   # add pseudo_cells to the network and connect them with stable state cells
   gp.wSSC <- gp
   min.edge.weight <- min(E(gp)$weight)
-  gp.wSSC <- add_vertices(gp.wSSC, dim(ss.cells.df)[1], attr=list(name=rownames(ss.cells.df)))
+  gp.wSSC <- igraph::add_vertices(gp.wSSC, dim(ss.cells.df)[1], attr=list(name=rownames(ss.cells.df)))
   for (i in 1:length(states)) {
     i.ss <- rownames(subset(cells.df, slice.stablestate==states[i] & slice.realcell==1))
     i.ssc <- paste("slice.ss.", states[i], sep="")
@@ -1529,7 +1542,8 @@ getLM.graph <- function(es, model.type="tree",
   return(ret)
 }
 
-
+#' @importFrom stats quantile
+#' @importFrom igraph get.edgelist
 get.SP.Transitions <- function(es, model, start, end,  network="mst", NN.threshold=0.8, NN.type="all", do.plot=T, context_str="") {
 
   if (is.null(model$lineageModel) | length(V(model$lineageModel))<2 ) {
@@ -1568,7 +1582,7 @@ get.SP.Transitions <- function(es, model, start, end,  network="mst", NN.thresho
 
   transitions <- list()
   transitions.wNN <- list()
-  NN.dist <- as.numeric(quantile(E(net)$weight, probs=NN.threshold))
+  NN.dist <- as.numeric(stats::quantile(E(net)$weight, probs=NN.threshold))
   # NN.dist <- as.numeric(max(E(net)$weight)*NN.threshold)
 
   if (length(paths)<=0) {
@@ -1624,7 +1638,7 @@ get.SP.Transitions <- function(es, model, start, end,  network="mst", NN.thresho
         if (NN.type == "NN") {
           k.neighbors <- igraph::neighbors(net, k.cell.vid)$name
         } else {
-          k.neighbors <- igraph::V(net)$name
+          k.neighbors <- V(net)$name
         }
 
         k.nn <- c()
@@ -1670,7 +1684,7 @@ get.SP.Transitions <- function(es, model, start, end,  network="mst", NN.thresho
         pdf.h <- 6
 
         # visualize the transitions
-        edge_list <- as.data.frame(get.edgelist(net))
+        edge_list <- as.data.frame(igraph::get.edgelist(net))
         colnames(edge_list) <- c("source", "target")
 
         dd <- cells.df[, c("entropy","x", "y")]
@@ -1725,7 +1739,8 @@ get.SP.Transitions <- function(es, model, start, end,  network="mst", NN.thresho
   return(ret)
 }
 
-
+#' @importFrom reshape2 melt
+#' @importFrom stats aggregate
 get.SPT.Profiles <- function(es, transitions, context_str="",
                              do.plot=T, plot.xlabel=NULL, plot.ylabel=NULL, plot.w=2.8, plot.h=1) {
 
@@ -1747,7 +1762,7 @@ get.SPT.Profiles <- function(es, transitions, context_str="",
     transition.profiles[[i]] <- list(exprs=i.exp, cells=colnames(i.exp), genes=rownames(i.exp), ptime=i.pseudotime$PTIME)
     names(transition.profiles)[i] <- names(transitions)[i]
 
-    # write.table(data.frame(RID=rownames(i.gexp), i.gexp, check.names=FALSE), file=paste(context_str, "lineage-sp-profiles-", names(transitions)[i], ".txt", sep=""), sep="\t", col.names=T, row.names=F)
+    # utils::write.table(data.frame(RID=rownames(i.gexp), i.gexp, check.names=FALSE), file=paste(context_str, "lineage-sp-profiles-", names(transitions)[i], ".txt", sep=""), sep="\t", col.names=T, row.names=F)
 
     if(is.null(plot.xlabel)) {
       plot.xlabel = names(transitions)[i]
@@ -1770,18 +1785,18 @@ get.SPT.Profiles <- function(es, transitions, context_str="",
 
         # cell.ptime$ptime <- (cell.ptime$ptime-min(cell.ptime$ptime))/(max(cell.ptime$ptime)-min(cell.ptime$ptime))
 
-        dd.melt <- melt(dd, id.vars = c("gene"))
+        dd.melt <- reshape2::melt(dd, id.vars = c("gene"))
         dd.melt <- merge(dd.melt, cell.ptime, by.x="variable", by.y="cell")
 
         dd.melt$gene <- factor(dd.melt$gene, levels = as.character(rownames(fData(es))))
 
-        i.exp.avg <- aggregate(x=t(i.exp), by=list(PTIME=i.pseudotime$PTIME), FUN="mean")
+        i.exp.avg <- stats::aggregate(x=t(i.exp), by=list(PTIME=i.pseudotime$PTIME), FUN="mean")
         i.exp.avg <- i.exp.avg[, 2:dim(i.exp.avg)[2]]
         i.exp.avg <- t(i.exp.avg)
         colnames(i.exp.avg) <- paste("v", 1:dim(i.exp.avg)[2], sep="")
         cell.ptime.2 <- data.frame(cell=colnames(i.exp.avg), ptime=1:dim(i.exp.avg)[2])
         dd.avg <- data.frame(gene=rownames(i.exp.avg), i.exp.avg, check.names=FALSE)
-        dd.avg.melt <- melt(dd.avg, id.vars=c("gene"))
+        dd.avg.melt <- reshape2::melt(dd.avg, id.vars=c("gene"))
         dd.avg.melt <- merge(dd.avg.melt, cell.ptime.2, by.x="variable", by.y="cell")
 
         fmt<-function(x){format(x,nsmall = 2,scientific = FALSE)}
@@ -1829,7 +1844,10 @@ get.SPT.Profiles <- function(es, transitions, context_str="",
   return(transition.profiles)
 }
 
-
+#' @importFrom graphics plot abline text
+#' @importFrom cluster maxSE pam
+#' @importFrom stats kmeans
+#' @importFrom utils write.table
 getLM.clustering <- function(es, model.type="tree", cluster.method="kmeans",
                              k=NULL, k.max=10, B=100, k.opt.method="firstmax",
                              ss.method="top", ss.threshold=0.25,
@@ -1873,23 +1891,23 @@ getLM.clustering <- function(es, model.type="tree", cluster.method="kmeans",
 
   if (is.null(k)) {
     if (cluster.method=="pam") {
-      gskmn <- cluster::clusGap(as.matrix(reducedDims), FUN = pam,  K.max = k.max, B = B)
+      gskmn <- cluster::clusGap(as.matrix(reducedDims), FUN = cluster::pam,  K.max = k.max, B = B)
     } else if (cluster.method=="kmeans") {
-      gskmn <- cluster::clusGap(as.matrix(reducedDims), FUN = kmeans,  K.max = k.max, B = B)
+      gskmn <- cluster::clusGap(as.matrix(reducedDims), FUN = stats::kmeans,  K.max = k.max, B = B)
     }
-    plot(gskmn, main = paste("Number of Cellular States determined by\n Gap statistic (FUN=",cluster.method,", k.max=", k.max, ", B=",B, ")", sep=""))
+    graphics::plot(gskmn, main = paste("Number of Cellular States determined by\n Gap statistic (FUN=",cluster.method,", k.max=", k.max, ", B=",B, ")", sep=""))
 
     # default: firstmax rule
-    k <- maxSE(f=as.numeric(gskmn$Tab[,"gap"]), SE.f=as.numeric(gskmn$Tab[,"SE.sim"]), method=k.opt.method)
-    abline(v=k, col="blue", lty=2, lwd=3)
-    text(k, min(gskmn$Tab[,"gap"]), paste(" k=",k, "\n(", k.opt.method, ")", sep=""), col="blue", adj = c(-.1, -.1), cex=1.1)
+    k <- cluster::maxSE(f=as.numeric(gskmn$Tab[,"gap"]), SE.f=as.numeric(gskmn$Tab[,"SE.sim"]), method=k.opt.method)
+    graphics::abline(v=k, col="blue", lty=2, lwd=3)
+    graphics::text(k, min(gskmn$Tab[,"gap"]), paste(" k=",k, "\n(", k.opt.method, ")", sep=""), col="blue", adj = c(-.1, -.1), cex=1.1)
   }
 
   if (cluster.method == "pam") {
-    db <- pam(as.matrix(reducedDims), k)
+    db <- cluster::pam(as.matrix(reducedDims), k)
     pData(es)$slice.state <- paste("C",as.numeric(db$clustering),sep="")
   } else if (cluster.method=="kmeans") {
-    db <- kmeans(as.matrix(reducedDims), k)
+    db <- stats::kmeans(as.matrix(reducedDims), k)
     pData(es)$slice.state <- paste("C",as.numeric(db$cluster),sep="")
   }
 
@@ -1969,7 +1987,7 @@ getLM.clustering <- function(es, model.type="tree", cluster.method="kmeans",
 
 
   if (do.plot) {
-    write.table(cbind(CELL=rownames(cells.df), cells.df), file=paste(context_str, "lineage-c.step3-cell_clusters.txt", sep=""), sep="\t", col.names=T, row.names=F)
+    utils::write.table(cbind(CELL=rownames(cells.df), cells.df), file=paste(context_str, "lineage-c.step3-cell_clusters.txt", sep=""), sep="\t", col.names=T, row.names=F)
   }
 
   # lineage model
@@ -2031,8 +2049,10 @@ getLM.clustering <- function(es, model.type="tree", cluster.method="kmeans",
   return(ret)
 }
 
-
-get.PC.Transitions <- function(es, model, start, end, do.trim=F, do.plot=T, context_str="") {
+#' @importFrom princurve principal.curve
+#' @importFrom grid arrow unit
+get.PC.Transitions <- function(es, model, start, end, do.trim=F, do.plot=T, context_str="", verbose = T) {
+  requireNamespace("igraph")
 
   if (is.null(model$lineageModel) | length(V(model$lineageModel))<2 ) {
     stop("Not enough states")
@@ -2057,7 +2077,9 @@ get.PC.Transitions <- function(es, model, start, end, do.trim=F, do.plot=T, cont
   }
   dim.cols <- colnames(cells.df)[dim.cols.idx]
 
-  cat("\nReconstructing principal-curve based cell trajectories following the inferred lineage C", start, "->C", end, "\n", sep="")
+  if (verbose) {
+    cat("\nReconstructing principal-curve based cell trajectories following the inferred lineage C", start, "->C", end, "\n", sep="")
+  }
 
   if (length(paths)<=0) {
     warning(paste("no transition path from ", V(g)$name[start], " to ", V(g)$name[end], sep=""))
@@ -2069,7 +2091,7 @@ get.PC.Transitions <- function(es, model, start, end, do.trim=F, do.plot=T, cont
       i.path.states <- cells.df$slice.state[which(rownames(cells.df) %in% i.path)]
       i.cells.df <- cells.df[which(cells.df$slice.state %in% i.path.states), ]
       i.cells.w <- (1-as.numeric(i.cells.df$entropy))
-      i.pcurve.fit <- principal.curve(as.matrix(i.cells.df[, dim.cols]), smoother="smooth.spline", w=i.cells.w, df=length(i.path)+1)
+      i.pcurve.fit <- princurve::principal.curve(as.matrix(i.cells.df[, dim.cols]), smoother="smooth.spline", w=i.cells.w, df=length(i.path)+1)
 
       i.pseudotime <- as.data.frame(i.pcurve.fit$s[i.pcurve.fit$tag, ]) # correct direction
       s.id <- which(rownames(i.pseudotime)==i.start)
@@ -2106,7 +2128,7 @@ get.PC.Transitions <- function(es, model, start, end, do.trim=F, do.plot=T, cont
         g <- g + geom_point(data=cells.df[which(cells.df$slice.realcell==0), ], aes(x=x, y=y, size=entropy), col="black")
         g <- g + geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate == "NA" ), aes(x=x, y=y, col=slice.state, size=entropy))
 
-        g <- g + geom_path(data=data.frame(transition.paths[[i]]$i.pseudotime), aes(x=Dim1, y=Dim2), alpha=0.6, col="orange3", size=4, arrow=arrow(ends="last", type = "closed", length = unit(0.25, "inches")))
+        g <- g + geom_path(data=data.frame(transition.paths[[i]]$i.pseudotime), aes(x=Dim1, y=Dim2), alpha=0.6, col="orange3", size=4, arrow=grid::arrow(ends="last", type = "closed", length = grid::unit(0.25, "inches")))
 
         g <- g + SLICE_theme_opts()
         g <- g + theme(axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5))
@@ -2124,7 +2146,9 @@ get.PC.Transitions <- function(es, model, start, end, do.trim=F, do.plot=T, cont
   return(transition.paths)
 }
 
-get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plot=T, context_str="") {
+#' @importFrom princurve principal.curve
+#' @importFrom grid arrow unit
+get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plot=T, context_str="", verbose = T) {
 
   if (is.null(model$lineageModel) | length(V(model$lineageModel))<2 ) {
     stop("Not enough states")
@@ -2149,7 +2173,9 @@ get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plo
   }
   dim.cols <- colnames(cells.df)[dim.cols.idx]
 
-  cat("\nReconstructing principal-curve based cell trajectories following the inferred lineage C", start, "->C", end, "\n", sep="")
+  if (verbose) {
+    cat("\nReconstructing principal-curve based cell trajectories following the inferred lineage C", start, "->C", end, "\n", sep="")
+  }
 
   if (length(paths)<=0) {
     warning(paste("no transition path from ", V(g)$name[start], " to ", V(g)$name[end], sep=""))
@@ -2165,7 +2191,7 @@ get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plo
         i.path.states <- cells.df$slice.state[which(rownames(cells.df) %in% i.path)]
         i.cells.df <- cells.df[which(cells.df$slice.state %in% i.path.states), ]
         i.cells.w <- (1-as.numeric(i.cells.df$entropy))
-        i.pcurve.fit <- principal.curve(as.matrix(i.cells.df[, dim.cols]), smoother="smooth.spline", w=i.cells.w, df=length(i.path)+1)
+        i.pcurve.fit <- princurve::principal.curve(as.matrix(i.cells.df[, dim.cols]), smoother="smooth.spline", w=i.cells.w, df=length(i.path)+1)
 
         i.pseudotime <- as.data.frame(i.pcurve.fit$s[i.pcurve.fit$tag, ]) # correct direction
         s.id <- which(rownames(i.pseudotime)==i.start)
@@ -2208,7 +2234,7 @@ get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plo
 
         i.jk.cells.df <- cells.df[which(cells.df$slice.state %in% c(i.j.state, i.k.state)), ]
         i.jk.cells.w <- (1-as.numeric(i.jk.cells.df$entropy))
-        i.jk.pcurve.fit <- principal.curve(as.matrix(i.jk.cells.df[, dim.cols]), smoother="smooth.spline", w=i.jk.cells.w, df=3)
+        i.jk.pcurve.fit <- princurve::principal.curve(as.matrix(i.jk.cells.df[, dim.cols]), smoother="smooth.spline", w=i.jk.cells.w, df=3)
         i.jk.pseudotime <- as.data.frame(i.jk.pcurve.fit$s[i.jk.pcurve.fit$tag, ])
 
         i.jk.s.id <- which(rownames(i.jk.pseudotime)==i.jk.start)
@@ -2233,7 +2259,7 @@ get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plo
 
           i.jk.cells.df <- cells.df[which(cells.df$slice.state %in% c(i.j.state, i.k.state)), ]
           i.jk.cells.w <- (1-as.numeric(i.jk.cells.df$entropy))
-          i.jk.pcurve.fit <- principal.curve(as.matrix(i.jk.cells.df[, dim.cols]), smoother="smooth.spline", w=i.jk.cells.w, df=3)
+          i.jk.pcurve.fit <- princurve::principal.curve(as.matrix(i.jk.cells.df[, dim.cols]), smoother="smooth.spline", w=i.jk.cells.w, df=3)
           i.jk.pseudotime <- as.data.frame(i.jk.pcurve.fit$s[i.jk.pcurve.fit$tag, ])
 
           i.jk.s.id <- which(rownames(i.jk.pseudotime)==i.jk.start)
@@ -2310,7 +2336,7 @@ get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plo
         g <- g + geom_point(data=cells.df[which(cells.df$slice.realcell==0), ], aes(x=x, y=y, size=entropy), col="black")
         g <- g + geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate == "NA" ), aes(x=x, y=y, col=slice.state, size=entropy))
 
-        g <- g + geom_path(data=data.frame(transition.paths[[i]]$i.pseudotime), aes(x=Dim1, y=Dim2), alpha=0.6, col="orange3", size=4, arrow=arrow(ends="last", type = "closed", length = unit(0.25, "inches")))
+        g <- g + geom_path(data=data.frame(transition.paths[[i]]$i.pseudotime), aes(x=Dim1, y=Dim2), alpha=0.6, col="orange3", size=4, arrow=grid::arrow(ends="last", type = "closed", length = grid::unit(0.25, "inches")))
 
         g <- g + SLICE_theme_opts()
         g <- g + theme(axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5))
@@ -2328,7 +2354,7 @@ get.PC.Transitions.stepwise <- function(es, model, start, end, do.trim=F, do.plo
   return(transition.paths)
 }
 
-
+#' @importFrom reshape2 melt
 get.PCT.Profiles <- function(es, transitions, context_str="",
                              do.plot=T, plot.xlabel=NULL, plot.ylabel=NULL, plot.w=2.8, plot.h=1) {
 
@@ -2356,7 +2382,7 @@ get.PCT.Profiles <- function(es, transitions, context_str="",
     transition.profiles[[i]] <- list(exprs=i.exp, cells=colnames(i.exp), genes=rownames(i.exp), ptime=i.pseudotime$ptime)
     names(transition.profiles)[i] <- names(transitions)[i]
 
-    #write.table(data.frame(RID=rownames(i.gexp), i.gexp), file=paste(context_str, "lineage-trajectory.", names(transitions)[i], ".profiles.txt", sep=""), sep="\t", col.names=T, row.names=F)
+    #utils::write.table(data.frame(RID=rownames(i.gexp), i.gexp), file=paste(context_str, "lineage-trajectory.", names(transitions)[i], ".profiles.txt", sep=""), sep="\t", col.names=T, row.names=F)
 
     if(is.null(plot.xlabel)) {
       plot.xlabel = names(transitions)[i]
@@ -2377,7 +2403,7 @@ get.PCT.Profiles <- function(es, transitions, context_str="",
         dd <- data.frame(gene=rownames(i.exp), log(i.exp+1,2), check.names=FALSE)
         cell.ptime <- data.frame(cell=colnames(i.exp), ptime=i.pseudotime$ptime, check.names=FALSE)
 
-        dd.melt <- melt(dd, id.vars = c("gene"))
+        dd.melt <- reshape2::melt(dd, id.vars = c("gene"))
         dd.melt <- merge(dd.melt, cell.ptime, by.x="variable", by.y="cell")
 
         dd.melt$gene <- factor(dd.melt$gene, levels = as.character(rownames(i.es)))
@@ -2424,14 +2450,7 @@ get.PCT.Profiles <- function(es, transitions, context_str="",
   return(transition.profiles)
 }
 
-
-concate.trajectories <- function(...) {
-
-
-
-}
-
-
+#' @importFrom mgcv gam
 fitSmoothModel <- function(x, y=NULL, k=NULL, model=1) {
 
   if (is.null(y)) {
@@ -2451,10 +2470,12 @@ fitSmoothModel <- function(x, y=NULL, k=NULL, model=1) {
 }
 
 
+#' @importFrom stats var
+#' @importFrom lmtest lrtest
 fit_helper <- function(x, ptime, k) {
 
   #dd <- data.frame(V=as.numeric(x), ptime=ptime)
-  if (var(as.numeric(x))==0) {
+  if (stats::var(as.numeric(x))==0) {
     pvalue <- 1
     dd <- data.frame(V=as.numeric(x), ptime=ptime)
     dd <- unique(dd)
@@ -2464,7 +2485,7 @@ fit_helper <- function(x, ptime, k) {
     m0 <- fitSmoothModel(x=as.numeric(x), y=ptime, k=k, model=0)
     lr.ret <- lmtest::lrtest(m1, m0)
     pvalue <- lr.ret[2, "Pr(>Chisq)"]
-    dd <- data.frame(V=as.numeric(predict(m1)), ptime=ptime)
+    dd <- data.frame(V=as.numeric(stats::predict(m1)), ptime=ptime)
     dd <- unique(dd)
     m1.expr <- as.numeric(dd$V)
   }
@@ -2472,20 +2493,16 @@ fit_helper <- function(x, ptime, k) {
   return (c(pvalue, m1.expr))
 }
 
-
-getCellSimilarityNetwork <- function(x, dist.method="euclidean", wiring.threshold=function(x) max(x)*1) {
+#' @importFrom stats cor dist
+#' @importFrom igraph graph.adjacency minimum.spanning.tree are.connected add.edges
+#' @importFrom reshape2 melt
+getCellSimilarityNetwork <- function(x, dist.method=c("euclidean", "pearson", "spearman"), wiring.threshold=function(x) max(x)*1) {
 
 
   #######################################################################
   ##############           input validation            ##################
   #######################################################################
-
-  dms <- c("euclidean", "pearson", "spearman")
-  d.id <- pmatch(dist.method, dms)
-  if (is.na(d.id)) {
-    stop("invalid distance measure.")
-  }
-  dist.method <- dms[d.id]
+  dist.method <- match.arg(dist.method)
 
   #######################################################################
   ##############         cell pairwise distance        ##################
@@ -2498,9 +2515,9 @@ getCellSimilarityNetwork <- function(x, dist.method="euclidean", wiring.threshol
     A <- as.matrix(x)
   } else if (class(x)=="matrix") {
     if (dist.method=="pearson" | dist.method=="spearman") {
-      A <- (1-cor(x, method=dist.method))/2
+      A <- (1-stats::cor(x, method=dist.method))/2
     } else {
-      cdist <- dist(t(x), method=dist.method)
+      cdist <- stats::dist(t(x), method=dist.method)
       A <- as.matrix(cdist)
     }
   } else {
@@ -2512,9 +2529,8 @@ getCellSimilarityNetwork <- function(x, dist.method="euclidean", wiring.threshol
   #######################################################################
 
   # minimum spanning tree
-  mst <- NULL
-  mst <- graph.adjacency(A, mode="undirected", weighted=TRUE)
-  mst <- minimum.spanning.tree(mst)
+  mst <- igraph::graph.adjacency(A, mode="undirected", weighted=TRUE)
+  mst <- igraph::minimum.spanning.tree(mst)
 
   csn <- mst
 
@@ -2523,15 +2539,15 @@ getCellSimilarityNetwork <- function(x, dist.method="euclidean", wiring.threshol
 
     if (threshold>0) {
       # local wiring
-      AE <- melt(A)
+      AE <- reshape2::melt(A)
       colnames(AE) <- c("source", "target", "weight")
       AE <- AE[which(AE$weight<=threshold & AE$weight>0),]
       for (i in 1:dim(AE)[1]) {
         v1 <- as.character(AE$source[i])
         v2 <- as.character(AE$target[i])
         w <- as.numeric(AE$weight[i])
-        if(are.connected(csn, v1, v2) == FALSE) {
-          csn <- add.edges(csn, c(v1, v2), attr=list(weight=w))
+        if(!igraph::are.connected(csn, v1, v2)) {
+          csn <- igraph::add.edges(csn, c(v1, v2), attr=list(weight=w))
         }
       }
     }
@@ -2540,15 +2556,9 @@ getCellSimilarityNetwork <- function(x, dist.method="euclidean", wiring.threshol
   return(list(mst=mst, csn=csn))
 }
 
-
-getCellCommunities <- function(csn, method="louvain") {
-
-  ms <- c("auto", "fast_greedy", "edge_betweenness", "label_prop", "leading_eigen","louvain","spinglass","walktrap")
-  m.id <- pmatch(method, ms)
-  if (is.na(m.id)) {
-    stop("Invalid Community Detection Method.")
-  }
-  method <- ms[m.id]
+#' @importFrom igraph membership modularity
+getCellCommunities <- function(csn, method=c("louvain", "auto", "fast_greedy", "edge_betweenness", "label_prop", "leading_eigen","louvain","spinglass","walktrap")) {
+  method <- match.arg(method)
 
   func <- "cluster_walktrap"
   if (method=="auto") {
@@ -2558,8 +2568,8 @@ getCellCommunities <- function(csn, method="louvain") {
     for (i in 1:length(functions)) {
       cm <- NULL
       cm <- do.call(functions[i], args=list(graph=csn, weights=E(csn)$weight))
-      cmm <- membership(cm)
-      cmmms[i] <- modularity(csn, cmm)
+      cmm <- igraph::membership(cm)
+      cmmms[i] <- igraph::modularity(csn, cmm)
     }
     func <- functions[which.max(cmmms)]
 
@@ -2576,20 +2586,11 @@ getCellCommunities <- function(csn, method="louvain") {
 }
 
 
-
-getStateGraph <- function(x, dist.method="euclidean", type="mst") {
-
-
-  #######################################################################
-  ##############           input validation            ##################
-  #######################################################################
-
-  dms <- c("euclidean", "pearson", "spearman")
-  d.id <- pmatch(dist.method, dms)
-  if (is.na(d.id)) {
-    stop("invalid distance measure.")
-  }
-  dist.method <- dms[d.id]
+#' @importFrom stats cor dist
+#' @importFrom igraph graph.adjacency minimum.spanning.tree
+getStateGraph <- function(x, dist.method=c("euclidean", "pearson", "spearman"), type="mst") {
+  # input validation
+  dist.method <- match.arg(dist.method)
 
   #######################################################################
   ##############         cell pairwise distance        ##################
@@ -2602,9 +2603,9 @@ getStateGraph <- function(x, dist.method="euclidean", type="mst") {
     A <- as.matrix(x)
   } else if (class(x)=="matrix") {
     if (dist.method=="pearson" | dist.method=="spearman") {
-      A <- (1-cor(x, method=dist.method))/2
+      A <- (1-stats::cor(x, method=dist.method))/2
     } else {
-      cdist <- dist(t(x), method=dist.method)
+      cdist <- stats::dist(t(x), method=dist.method)
       A <- as.matrix(cdist)
     }
   } else {
@@ -2618,23 +2619,23 @@ getStateGraph <- function(x, dist.method="euclidean", type="mst") {
   csn <- NULL
 
   if (type=="mst") {
-    csn <- graph.adjacency(A, mode="undirected", weighted=TRUE)
-    csn <- minimum.spanning.tree(csn)
+    csn <- igraph::graph.adjacency(A, mode="undirected", weighted=TRUE)
+    csn <- igraph::minimum.spanning.tree(csn)
   } else if (type=="graph") {
-    csn <- graph.adjacency(A, mode="undirected", weighted=TRUE)
+    csn <- igraph::graph.adjacency(A, mode="undirected", weighted=TRUE)
   }
 
   return(csn)
 }
 
-
+#' @importFrom reshape2 melt
 plotViolin <- function(x, y, ncol=NULL, nrow=2, scale="free",
                        do.violin=T,
                        cols=NULL, point.size=1,
                        x.label="Group", y.label="Expression (+1, log2)",
                        x.label.size=10, y.label.size=10,
                        axis.size=8, fig.label.size=12) {
-  x.melt <- melt(x, id.vars=c("V"))
+  x.melt <- reshape2::melt(x, id.vars=c("V"))
   x.melt <- merge(x.melt, y, by.x="variable", by.y="V1")
 
   x.melt$V <- factor(x.melt$V, levels=as.character(x$V))
@@ -2644,13 +2645,13 @@ plotViolin <- function(x, y, ncol=NULL, nrow=2, scale="free",
   g <- ggplot(x.melt)
 
   if (!(is.null(nrow)) & !(is.null(ncol))) {
-    g <- g + facet_wrap("V", nrow=nrow, ncol=ncol, scale="free")
+    g <- g + facet_wrap("V", nrow=nrow, ncol=ncol, scales="free")
   }
   if (!(is.null(ncol))) {
-    g <- g + facet_wrap("V", ncol=ncol, scale="free")
+    g <- g + facet_wrap("V", ncol=ncol, scales="free")
   }
   if (!(is.null(nrow))) {
-    g <- g + facet_wrap("V", nrow=nrow, scale="free")
+    g <- g + facet_wrap("V", nrow=nrow, scales="free")
   }
 
   g <- g + geom_point(aes(x=V2, y=value, col=V2), position="jitter", size=point.size)
