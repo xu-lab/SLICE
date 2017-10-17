@@ -3,17 +3,12 @@
 \docType{data}
 \name{FB}
 \alias{FB}
-\alias{FB}
 \title{FB}
 \format{An object of class \code{ExpressionSet} with 35376 rows and 79 columns.}
 \usage{
 FB
-
-FB
 }
 \description{
-TODO: add detailed documentation on this code object
-
 TODO: add detailed documentation on this code object
 }
 \keyword{datasets}

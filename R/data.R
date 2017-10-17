@@ -4,12 +4,6 @@
 #' @docType data
 "FB"
 
-#' FB
-#'
-#' TODO: add detailed documentation on this code object
-#' @docType data
-"FB"
-
 #' FB.sig
 #'
 #' TODO: add detailed documentation on this code object
