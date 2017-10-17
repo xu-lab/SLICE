@@ -12,8 +12,8 @@ getLineageModel(object, lm.method = "clustering", model.type = "tree",
   cluster.method = "kmeans", k = NULL, k.max = 10, B = 100,
   k.opt.method = "firstmax", do.plot = F)
 
-\S4method{getLineageModel}{slice}(object, lm.method = "clustering",
-  model.type = "tree", reverse = F, ss.method = "all",
+\S4method{getLineageModel}{slice}(object, lm.method = c("clustering",
+  "graph"), model.type = "tree", reverse = F, ss.method = "all",
   ss.threshold = 0.25, wiring.threshold = function(mst) max(mst),
   community.method = "louvain", cluster.method = "kmeans", k = NULL,
   k.max = 10, B = 100, k.opt.method = "firstmax", do.plot = F)

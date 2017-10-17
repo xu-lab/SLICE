@@ -323,36 +323,29 @@ setGeneric("getLineageModel", function(object, lm.method="clustering", model.typ
                                        do.plot = F) standardGeneric("getLineageModel"))
 #' @rdname getLineageModel-methods
 #' @aliases getLineageModel,slice-method
-setMethod("getLineageModel","slice",
-          function(object, lm.method="clustering", model.type="tree", reverse=F, ss.method="all", ss.threshold=0.25, # common parameter
-                            wiring.threshold=function(mst) max(mst), community.method="louvain",                     # parameters for graph-based method
-                            cluster.method="kmeans", k=NULL, k.max=10, B=100, k.opt.method="firstmax",               # parameters for clustering-based method
-                            do.plot = F) {
+setMethod("getLineageModel","slice", function(object, lm.method=c("clustering","graph"), model.type="tree", reverse=F, ss.method="all", ss.threshold=0.25, # common parameter
+                                              wiring.threshold=function(mst) max(mst), community.method="louvain",                     # parameters for graph-based method
+                                              cluster.method="kmeans", k=NULL, k.max=10, B=100, k.opt.method="firstmax",               # parameters for clustering-based method
+                                              do.plot = F) {
+  lm.method <- match.arg(lm.method)
 
-              lmmethods <- c("clustering","graph")
-              mid <- pmatch(lm.method, lmmethods)
-              if (is.na(mid)) {
-                stop("Invalid lm.method. Please select \"cluster\" or \"graph\"")
-              }
-              lm.method=lmmethods[mid]
-
-              lm = NULL
-              if (lm.method=="graph") {
-                lm <- getLM.graph(object@data, model.type=model.type, wiring.threshold=wiring.threshold,
-                                  community.method=community.method,
-                                  ss.method=ss.method, ss.threshold=ss.threshold,
-                                  reverse = reverse, do.plot=do.plot, context_str=object@projname)
-              } else if (lm.method=="clustering") {
-                lm <- getLM.clustering(object@data, model.type=model.type, cluster.method=cluster.method,
-                                       k=k, k.max=k.max, B=B, k.opt.method=k.opt.method,
-                                       ss.method=ss.method, ss.threshold=ss.threshold,
-                                       reverse = reverse, do.plot=do.plot, context_str=object@projname)
-              }
+  lm = NULL
+  if (lm.method=="graph") {
+    lm <- getLM.graph(object@data, model.type=model.type, wiring.threshold=wiring.threshold,
+                      community.method=community.method,
+                      ss.method=ss.method, ss.threshold=ss.threshold,
+                      reverse = reverse, do.plot=do.plot, context_str=object@projname)
+  } else if (lm.method=="clustering") {
+    lm <- getLM.clustering(object@data, model.type=model.type, cluster.method=cluster.method,
+                           k=k, k.max=k.max, B=B, k.opt.method=k.opt.method,
+                           ss.method=ss.method, ss.threshold=ss.threshold,
+                           reverse = reverse, do.plot=do.plot, context_str=object@projname)
+  }
 
 
-              object <- setLineageModel(object, lm.method=lm.method, lm=lm)
-              return(object)
-          }
+  object <- setLineageModel(object, lm.method=lm.method, lm=lm)
+  return(object)
+}
 )
 setGeneric("setLineageModel", function(object, lm.method="clustering", lm=NULL) standardGeneric("setLineageModel"))
 setMethod("setLineageModel","slice",
@@ -816,26 +809,20 @@ setMethod("plotEntropies","slice",
 #' @importFrom utils write.table
 #' @importFrom entropy entropy.Dirichlet
 scEntropy <- function(exp.m, clusters=NULL, km=NULL, calculation=c("bootstrap","deterministic"), r=1,
-                      exp.cutoff=1, n=1000, p=0, k=0, cmethod="kmeans", prior="pr",
+                      exp.cutoff=1, n=1000, p=0, k=0, cmethod=c("kmeans","pam"), prior="pr",
                       random.seed=201602, context_str="", verbose=F) {
 
   if (is.null(clusters) & is.null(km)) {
     stop("Please provide either a clustering of genes or a similarity matrix of genes")
   }
 
-  calculation <- pmatch(calculation)
+  calculation <- match.arg(calculation)
 
   if (!is.null(random.seed)) {
     set.seed(random.seed)
   }
 
-  cmethods <- c("kmeans","pam")
-  sid <- pmatch(cmethod, cmethods)
-  if (is.na(sid)) {
-    stop("Please choose kmeans or pam for gene clustering")
-  }
-  cmethod <- cmethods[sid]
-
+  cmethod <- match.arg(cmethod)
 
   cat("\nPerforming ", calculation, " calculation of scEntropy\n", sep="")
 
