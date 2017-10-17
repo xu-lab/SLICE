@@ -135,7 +135,7 @@ construct <- function(exprmatrix, cellidentity=NULL, projname=NULL) {
 #' performing bootstrap or deterministic calculation of scEntropy
 #'
 #' @param object Slice object
-#' @param cluster A data frame containing the functional clustering of genes; contains two columns "GENE" - official NCBI gene symbols and "CLUSTER" - cluster memberships.
+#' @param clusters A data frame containing the functional clustering of genes; contains two columns "GENE" - official NCBI gene symbols and "CLUSTER" - cluster memberships.
 #' @param km A symmetric matrix encoding the functional similarity of genes; the row names and column names must be official NCBI gene symbols.
 #' @param calculation Choose the "bootstrap" or "deterministic" calculation of scEntropy
 #' @param exp.cutoff The expression threshold of a gene to be considered expressed
