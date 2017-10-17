@@ -1363,8 +1363,9 @@ getLM.graph <- function(es, model.type="tree",
     cells.df <- rbind(cells.df, s.ss.df)
   }
 
-  utils::write.table(cbind(CELL=rownames(cells.df), cells.df), file=paste(context_str, "lineage-g.step4-cell_clusters.txt", sep=""), sep="\t", col.names=T, row.names=F)
-
+  if (do.plot) {
+    utils::write.table(cbind(CELL=rownames(cells.df), cells.df), file=paste(context_str, "lineage-g.step4-cell_clusters.txt", sep=""), sep="\t", col.names=T, row.names=F)
+  }
 
   ss.cells.df <- cells.df[which(cells.df$slice.realcell==0), ]
   if (model.type=="graph") {
@@ -1886,12 +1887,16 @@ getLM.clustering <- function(es, model.type="tree", cluster.method="kmeans",
     } else if (cluster.method=="kmeans") {
       gskmn <- cluster::clusGap(as.matrix(reducedDims), FUN = stats::kmeans,  K.max = k.max, B = B)
     }
-    graphics::plot(gskmn, main = paste("Number of Cellular States determined by\n Gap statistic (FUN=",cluster.method,", k.max=", k.max, ", B=",B, ")", sep=""))
+    if (do.plot) {
+      graphics::plot(gskmn, main = paste("Number of Cellular States determined by\n Gap statistic (FUN=",cluster.method,", k.max=", k.max, ", B=",B, ")", sep=""))
+    }
 
     # default: firstmax rule
     k <- cluster::maxSE(f=as.numeric(gskmn$Tab[,"gap"]), SE.f=as.numeric(gskmn$Tab[,"SE.sim"]), method=k.opt.method)
-    graphics::abline(v=k, col="blue", lty=2, lwd=3)
-    graphics::text(k, min(gskmn$Tab[,"gap"]), paste(" k=",k, "\n(", k.opt.method, ")", sep=""), col="blue", adj = c(-.1, -.1), cex=1.1)
+    if (do.plot) {
+      graphics::abline(v=k, col="blue", lty=2, lwd=3)
+      graphics::text(k, min(gskmn$Tab[,"gap"]), paste(" k=",k, "\n(", k.opt.method, ")", sep=""), col="blue", adj = c(-.1, -.1), cex=1.1)
+    }
   }
 
   if (cluster.method == "pam") {
@@ -1960,7 +1965,7 @@ getLM.clustering <- function(es, model.type="tree", cluster.method="kmeans",
     g <- ggplot() + ggtitle("Cell clusters and stable states") + labs(x="PC1", y="PC2")
     g <- g + geom_point(data=subset(cells.df, slice.realcell==1), aes(x=x, y=y, col=slice.state, size=entropy))
     #g <- g + geom_point(data=subset(cells.df, slice.realcell==1 & slice.stablestate == "NA" ), aes(x=x, y=y, col=slice.state, size=entropy))#, alpha=0.2)
-	g <- g + geom_point(data=cells.df[which(cells.df$slice.realcell==0), ], aes(x=x, y=y, size=entropy), col="black")
+	  g <- g + geom_point(data=cells.df[which(cells.df$slice.realcell==0), ], aes(x=x, y=y, size=entropy), col="black")
     g <- g + SLICE_theme_opts()
     g <- g + theme(axis.line.x = element_line(size=0.5), axis.line.y=element_line(size=0.5))
 
