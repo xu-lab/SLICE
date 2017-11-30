@@ -33,7 +33,4 @@ Description: This is the R package of the SLICE algorithm,
 License: GPL-3
 LazyData: TRUE
 RoxygenNote: 6.0.1
-Remotes:
-  bioc::Biobase,
-  bioc::BioNet
 
