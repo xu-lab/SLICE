@@ -2,6 +2,8 @@
 
 SLICE is an algorithm that utilizes single-cell RNA-seq (scRNA-seq) data to quantitatively measure cellular differentiation states based on single cell entropy and predict cell differentiation lineages via the construction of entropy directed cell trajectories.
 
+Developed by Minzhe Guo
+
 ## Installation
 
 * In R or RStudio, type the following command to install devtools
