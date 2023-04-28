@@ -17,9 +17,6 @@
 library(SLICE)
 
 
-
-
-
 # use a variable to store the path to the data directory; getwd() functions returns the full path of current working directory
 #data.dir <- paste(getwd(),"/data/", sep="")
 
@@ -85,7 +82,6 @@ sc <- getEntropy(sc, km=km,                             # use the pre-computed k
                  clustering.k=floor(sqrt(1000/2)),      # the number of functional clusters  
                  random.seed=201602)                    # set the random seed to reproduce the results in the paper
 
-
 # plot the entropy; will be save to a pdf named with "entropies" suffix in the working directory
 plotEntropies(sc)
 
@@ -114,11 +110,11 @@ sc <- getLineageModel(sc, lm.method="graph",                          # select g
 markers <- c("Fn1", "Tcf21", "Vcam1","Nr3c1", "Pdgfra", "Myocd", "Actg2", "Myh11", "Foxm1", "Top2a")
 
 
-# use the shortest-path method in SLICE to reconstruct cell transitional path following C1->C4
+# use the shortest-path method in SLICE to reconstruct cell transitional path following C4->C1
 # results will be plotted on screen and saved in the PDF files with file names containing "path-sp"
-sc <- getTrajectories(sc, method="sp", start=1, end=4, network="mst", NN.threshold=0.8, NN.type="all", do.plot=T)
+sc <- getTrajectories(sc, method="sp", start=4, end=1, network="mst", NN.threshold=0.8, NN.type="all", do.plot=T)
 
-# extract and visualize expression profiles of marker genes in the reconstructed shrotest-path transitional path
+# extract and visualize expression profiles of marker genes in the reconstructed shortest-path transitional path
 # results will be plotted on screen and saved in the PDF files with file names containing "path-sp" and "profiles"
 sc <- getProfiles(sc, trajectory.type="sp", genes.use=markers)
 
@@ -145,9 +141,9 @@ if (TRUE) { # This is to reproduce the differentiation expression and temporal p
 }
 
 
-# use the shortest-path method in SLICE to reconstruct cell transitional path following C1->C3->C2
+# use the shortest-path method in SLICE to reconstruct cell transitional path following C4->C2->C3
 # results will be plotted on screen and saved in the PDF files with file names containing "path-sp"
-sc <- getTrajectories(sc, method="sp", start=1, end=2, network="mst", NN.threshold=0.8, NN.type="all", do.plot=T)
+sc <- getTrajectories(sc, method="sp", start=4, end=3, network="mst", NN.threshold=0.8, NN.type="all", do.plot=T)
 
 # extract and visualize expression profiles of marker genes in the reconstructed shrotest-path transitional path
 # results will be plotted on screen and saved in the PDF files with file names containing "path-sp" and "profiles"
