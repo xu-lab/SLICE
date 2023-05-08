@@ -4,8 +4,17 @@
 \alias{getTrajectories}
 \title{Reconstructing cell trajectories following a specific lineage (start -> end) in the inferred lineage model}
 \usage{
-getTrajectories(object, method = "sp", start, end, network = "mst",
-  NN.threshold = 0.7, do.trim = F, do.stepwise = T, ...)
+getTrajectories(
+  object,
+  method = "sp",
+  start,
+  end,
+  network = "mst",
+  NN.threshold = 0.7,
+  do.trim = F,
+  do.stepwise = F,
+  ...
+)
 }
 \arguments{
 \item{object}{Slice object}

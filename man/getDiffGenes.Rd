@@ -4,8 +4,14 @@
 \alias{getDiffGenes}
 \title{Detecting lineage dependent differentially expressed genes}
 \usage{
-getDiffGenes(profiles, diff.thresh = 0.1, log.base = 2, thresh.exp = 1,
-  thresh.cell = 2, thresh.var = 0.5)
+getDiffGenes(
+  profiles,
+  diff.thresh = 0.1,
+  log.base = 2,
+  thresh.exp = 1,
+  thresh.cell = 2,
+  thresh.var = 0.5
+)
 }
 \arguments{
 \item{profiles}{The lineage dependent gene expression profiles}
