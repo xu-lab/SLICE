@@ -4,11 +4,22 @@
 \alias{getLineageModel}
 \title{Infer entropy-directed cell lineage model}
 \usage{
-getLineageModel(object, lm.method = "clustering", model.type = "tree",
-  reverse = F, ss.method = "all", ss.threshold = 0.25,
-  wiring.threshold = function(mst) max(mst), community.method = "louvain",
-  cluster.method = "kmeans", k = NULL, k.max = 10, B = 100,
-  k.opt.method = "firstmax", ...)
+getLineageModel(
+  object,
+  lm.method = "clustering",
+  model.type = "tree",
+  reverse = F,
+  ss.method = "all",
+  ss.threshold = 0.25,
+  wiring.threshold = function(mst) max(mst),
+  community.method = "louvain",
+  cluster.method = "kmeans",
+  k = NULL,
+  k.max = 10,
+  B = 100,
+  k.opt.method = "firstmax",
+  ...
+)
 }
 \arguments{
 \item{object}{Slice object}
@@ -55,7 +66,7 @@ SLICE provides two independent methods (clustering-based and graph-based) to per
 \details{
 The two algorithms both first divide cells into distinct cell clusters (representing cell states or cell types), find the stable state in each cluster, 
 and then infer the lineage model by constructing a directed graph or a directed minimum spanning tree among stable states.
-The directions of edges in the model follow entropy reduction (differentiation model) and entropy induction (dedifferentiation model)
+The directions of edges in the model follow entropy reduction (differentiation model) and entropy induction (dedifferentiation model)   
 
 Prerequisite: the "vds", "rds", and "entropy" slots in the input slice object must be set
 }

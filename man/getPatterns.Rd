@@ -4,9 +4,15 @@
 \alias{getPatterns}
 \title{Discover lineage dependent temporal patterns}
 \usage{
-getPatterns(expr, do.zscore = T, c.method = "pam", k = NULL,
-  d.method = function(x) as.dist((1 - cor(t(x)))/2), do.plot = T,
-  plot.filename = NULL)
+getPatterns(
+  expr,
+  do.zscore = T,
+  c.method = "pam",
+  k = NULL,
+  d.method = function(x) as.dist((1 - cor(t(x)))/2),
+  do.plot = T,
+  plot.filename = NULL
+)
 }
 \arguments{
 \item{expr}{The M1 predicted expression profiles of differentially expressed genes in a transition}

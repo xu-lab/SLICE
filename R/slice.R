@@ -115,6 +115,46 @@ construct <- function(exprmatrix, cellidentity=NULL, projname=NULL) {
     return(object)
 }
 
+#' construct a slice object from a Seurat object
+#'
+#' construct and initialize a slice object from a Seurat object
+#'
+#' @param obj A Seurat object containing sample data;
+#' @param assay The assay to extract expression matrix. Default is RNA
+#' @param cellidentity Either character indicating which meta data column to use or a character assay in the length of cell count ob the object
+#' @param projname A string describing the analysis; if not set, the default value is "SLICE-" with timestamp information
+#' @return the constructed and initialized slice object
+#' @export
+
+construct_from_seurat <- function(obj, assay="RNA", cellidentity=NULL, projname=NULL, scale=FALSE) {
+  if (is.null(cellidentity)) cellidentity <- rep("cell", dim(obj)[2])
+  if (is.null(projname)) projname <- paste("SLICE-", format(Sys.time(), "%b%d_%H_%M_%S"), "-", sep="")
+  if(!"Seurat" %in% (.packages())){
+    stop("Seurat is not loaded!")
+  }
+  
+  if (length(cellidentity)==1){
+    if(cellidentity %in% colnames(obj@meta.data)){
+      cellidentity = as.factor(obj@meta.data[,cellidentity])
+    }else{
+      stop("Cellidentity is not in meta.data columns")
+    }
+  } else if(length(cellidentity)!=dim(obj)[2]){
+    stop("Cellidentity is not the same size as the cell count")
+  }
+  
+  if(scale && dim(obj@assays[[assay]]@scale.data)[2]==0){
+    stop("The Seurat object is not scaled. Please scale the object or set scale to false.")
+  } else if(!scale){
+    mt = obj@assays[[assay]]@counts
+  } else{
+    mt = obj@assays[[assay]]@scale.data
+    
+  }
+
+  return(construct(exprmatrix = as.data.frame(as.matrix(mt)), cellidentity = cellidentity, projname = projname))
+}
+
 
 #' calculate scEntropies of individual cells
 #'

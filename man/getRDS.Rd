@@ -4,9 +4,19 @@
 \alias{getRDS}
 \title{reduce expression space}
 \usage{
-getRDS(object, genes.use = NULL, method = "pca", num_dim = 2,
-  log.base = 2, do.center = TRUE, do.scale = FALSE, use.cor = T,
-  min.var = 0.5, min.cells = 3, ...)
+getRDS(
+  object,
+  genes.use = NULL,
+  method = "pca",
+  num_dim = 2,
+  log.base = 2,
+  do.center = TRUE,
+  do.scale = FALSE,
+  use.cor = T,
+  min.var = 0.5,
+  min.cells = 3,
+  ...
+)
 }
 \arguments{
 \item{object}{slice object}

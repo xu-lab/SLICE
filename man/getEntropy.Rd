@@ -4,9 +4,18 @@
 \alias{getEntropy}
 \title{calculate scEntropies of individual cells}
 \usage{
-getEntropy(object, clusters = NULL, km = NULL, calculation = "bootstrap",
-  exp.cutoff = 1, B.size = 1000, B.num = 1, clustering.k = 0,
-  random.seed = 201602, ...)
+getEntropy(
+  object,
+  clusters = NULL,
+  km = NULL,
+  calculation = "bootstrap",
+  exp.cutoff = 1,
+  B.size = 1000,
+  B.num = 1,
+  clustering.k = 0,
+  random.seed = 201602,
+  ...
+)
 }
 \arguments{
 \item{object}{Slice object}
