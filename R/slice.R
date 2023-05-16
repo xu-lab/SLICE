@@ -248,26 +248,33 @@ setMethod("setEntropy","slice",
 #' @param min.cells The minimum number of expressed cells for a gene to be included in dimension reduction 
 #' @return updated slice object with reduced dimensions in the "rds" slot, the first two components are also used to set the "vds" slot for visualization.
 #' @export
-setGeneric("getRDS", function(object, genes.use=NULL, method="pca", num_dim=2, 
+setGeneric("getRDS", function(object, genes.use=NULL, reduction = NULL, method="pca", num_dim=2, 
                                   log.base=2, do.center=TRUE, do.scale=FALSE, 
                                   use.cor=T, min.var=0.5, min.cells=3, ...) standardGeneric("getRDS"))
 #' @export
 setMethod("getRDS","slice",
-          function(object, genes.use=NULL, method="pca", num_dim=2, 
+          function(object, genes.use=NULL, reduction = NULL, method="pca", num_dim=2, 
                    log.base=2, do.center=TRUE, do.scale=FALSE, 
                    use.cor=T, min.var=0.5, min.cells=3, ...) {
-            pcs <- NULL
-            if (!is.null(genes.use)) {
-              genes.use <- genes.use[which(genes.use %in% object@genenames)]
-            } else {
-              genes.use <- object@genenames
+            if(is.null(reduction)){
+              pcs <- NULL
+              if (!is.null(genes.use)) {
+                genes.use <- genes.use[which(genes.use %in% object@genenames)]
+              } else {
+                genes.use <- object@genenames
+              }
+              pcs <- reduceExpressionSpace(object@data[which(object@genenames %in% genes.use), ], method=method, num_dim=num_dim, 
+                                           log.base=log.base, do.center=do.center, do.scale=do.scale, 
+                                           use.cor=use.cor, min.var=min.var, min.cells=min.cells, 
+                                           verbose=FALSE)
+              object <- setRDS(object, pcs)
+              return(object)
+            } else{
+              colnames(reduction) = c("Dim1", "Dim2")
+              pcs = as.data.frame(reduction)
+              object <- setRDS(object, pcs)
+              return(object)
             }
-            pcs <- reduceExpressionSpace(object@data[which(object@genenames %in% genes.use), ], method=method, num_dim=num_dim, 
-                                         log.base=log.base, do.center=do.center, do.scale=do.scale, 
-                                         use.cor=use.cor, min.var=min.var, min.cells=min.cells, 
-                                         verbose=FALSE)
-            object <- setRDS(object, pcs)
-            return(object)
           }
 )
 setGeneric("setRDS", function(object, rds, vds.x=1, vds.y=2, ...) standardGeneric("setRDS"))
