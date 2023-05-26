@@ -29,7 +29,9 @@ Developed by Minzhe Guo
 
 * A demonstration of using SLICE to reconstruct a two-branched lung fibroblast differentiation lineage from E16.5 mouse lung single cell data can be found at https://github.com/minzheguo/SLICE/blob/master/demo/FB.R. 
 
-
+## Notes:
+* In order to use Seurat functionality, you need to import Seurat in advance and it is tested with Seurat 4.3.0, SeuratObject 4.1.3. Using other versions of Seurat (for example v5) may cause unexpected behaviour.
+* New versions of princurve library is not backwards compatible, hence we updated our package to work with newer versions of princurve (tested with 2.1.6). Make sure you import the right version to use related functionality. 
 ## Citation
 
 
